@@ -1,2 +1,5 @@
 /.DS_Store
-/inc/db.inc.php
+/internal/db.inc.php
+/images/
+/jquery-ui/
+/js/
