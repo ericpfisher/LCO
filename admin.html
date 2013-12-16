@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <link type="text/css" rel="stylesheet" href="css/reset.css" />
+        <link type="text/css" rel="stylesheet" href="jquery-ui/css/no-theme/jquery-ui-1.10.3.custom.min.css" />
+        <link type="text/css" rel="stylesheet" href="css/chosen.css" />
+		<link type="text/css" rel="stylesheet" href="css/main.css" />
+		<script src="js/jquery-1.10.2.min.js"></script>
+        <script src="jquery-ui/js/jquery-ui-1.10.3.custom.min.js"></script>
+        <script src="js/jquery.color-2.1.2.min.js"></script>
+        <script src="js/jquery.leanModal.min.js"></script>
+        <script src="js/chosen.jquery.js"></script>
+    <script>
+    $(document).ready(function() {
+        function manualModal(hideModal, showModal){
+            $(hideModal).css({ 'display': 'none' }).fadeOut(200);
+            setTimeout(function() {
+                var modal_height=$(showModal).outerHeight();
+                var modal_width=$(showModal).outerWidth();
+                $(showModal).css({
+                    "display":"block",
+                    "position":"fixed",
+                    "opacity":1,
+                    "z-index":11000,
+                    "left":50+"%",
+                    "margin-left":-(modal_width/2)+"px",
+                    "top":"100px"});
+                $(showModal).fadeIn(200,1);
+            }, 300);
+        };
+        
+        $('button[rel*=leanModal]').leanModal({top: 150, overlay: 0.45, closeButton: '.hideModal'});
+        $('div[rel*=leanModal]').leanModal({top: 150, overlay: 0.45, closeButton: '.hideModal'});
+        $('#logintrigger').click();
+        $('#lean_overlay').hide();
+        $('#login_overlay').css({ 'display' : 'block', opacity : 0 }).fadeTo(200, 0.5);
+        $('#loginbutton').click(function() {
+            user = $('#loginusername').val();
+            pass = $('#loginpassword').val();
+            var result = null;
+            if(user==''){
+                $('#loginform').submit(function() {
+                    $('#login').effect('shake');
+                    return false;
+                });
+            } else if(pass==''){
+                $('#loginform').submit(function() {
+                    $('#login').effect('shake');
+                    return false;
+                });
+            } else {
+                $.ajax({
+                    type: 'POST',
+                    data: {username: user, password: pass},
+                    async: false,
+                    url: './internal/adminlogin.php',
+                    dataType: 'json',
+                    success: function(data){
+                        result = data;
+                    }
+                });
+            };
+            if(result != null){
+                $('#login_overlay').fadeOut(200);
+                $('#lean_overlay').trigger('click');
+                return false;
+            } else {
+                $('#login').effect('shake');
+                return false;
+            };
+        });
+        
+        $(document).on('click', '#statusconfirm', function() {
+			$('#statusupdate').fadeOut(200);        
+            $('#lean_overlay').click();
+        });
+        
+        // universal modal close listener
+        $(document).on('click', '#lean_overlay', function() {
+            var active_modal = $('.modal').filter(function() {
+                return this.style.display==='block';
+            });
+            $(active_modal).addClass('hidden').css({ 'display': 'none' });
+            $(active_modal).fadeOut(200);
+        });
+
+        // this gets the list of techs from the DB
+        function userList() {
+            $.ajax({
+                type: 'POST',
+                url: './internal/userlist.php',
+                dataType: 'json',
+                success: function(data) {
+                    $('#listofusers').empty();
+                    $.each(data, function(index, techdata){
+                        $('#listofusers').append("<li><div class='userwrap'>\
+                            <div class='usernamewrap'><p class='usersummary' value='"+techdata.username+"'>"+techdata.first+" "+techdata.last+" ("+techdata.username+") </p></div>\
+                            <div class='linkwrap'><p id='resetpw' class='link resetpw' value='"+techdata.username+"'>Reset Password&nbsp;</p><p id='edituser' class='link edit' value='"+techdata.username+"'>&nbsp;Edit&nbsp;</p><p id='deleteuser' class='link delete' value='"+techdata.username+"'>&nbsp;Delete&nbsp;</p></div></div></li>");
+                    });
+                }
+            });
+        }; // end userList()
+        
+        // this gets the list of loaners from the DB
+        function loanerList() {
+            $.ajax({
+                type: 'POST',
+                url: './internal/loanerlist.php',
+                dataType: 'json',
+                success: function(data){
+                    $('#listofloaners').empty();
+                    $.each(data, function(index, loanerdata){
+                        $('#listofloaners').append("<li><div class='loanerwrap'>\
+                            <div class='loanersummarywrap'><p class='loanersummary' value='"+loanerdata.asset_tag+"'>"+loanerdata.asset_tag+" ("+loanerdata.kind+") </p></div>\
+                            <div class='linkwrap'><p id='editloaner' class='link edit' value='"+loanerdata.asset_tag+"'>Edit&nbsp;</p><p id='deleteloaner' class='link delete' value='"+loanerdata.asset_tag+"'>&nbsp;Delete</p></div></div></li>");
+                    });
+                }
+            });
+        }; // end loanerList()
+        
+        // takes kind and populates OS select element
+        function getOSes(kind) {
+            if(kind=='Mac') {
+                $('#os_version').empty().append("<option id='lion' value='OS X 10.7.x'>OS X 10.7.x</option><option id='mountainlion' value='OS X 10.8.x'>OS X 10.8.x</option>");
+                $('#os_version').chosen({width: '100%'});
+                $('#os_version').trigger('chosen:updated');
+            } else if(kind=='PC') {
+                $('#os_version').empty().append("<option id='win7' value='Windows 7'>Windows 7</option>");
+                $('#os_version').chosen({width: '100%'});
+                $('#os_version').trigger('chosen:updated');
+            } else {
+                $('#os_version').empty();
+            };
+        }; // end getOSes()
+        
+        $(document).on('click', '#toggleusers', function() {
+            userList();
+        });
+
+        $(document).on('click', '#toggleloaners', function() {
+            loanerList();
+        });
+
+        // listens for pcradio click
+        $(document).on('click', 'label[for="pcradio"]', function() {
+            getOSes('PC');
+        }); // end pcradio listener
+        
+        // listens for macradio click
+        $(document).on('click', 'label[for="macradio"]', function() {
+            getOSes('Mac');
+        }); // end macradio listener
+        
+        // reset password status alert listener
+        $(document).on('click', '#resetpw', function() {
+            $('#deleteuserbutton').hide();
+            $('#deleteloanerbutton').hide();
+            var target_user = $(this).attr('value');
+            $('#resetpasswordbutton').attr('value', target_user).show();
+            manualModal('#adminusers', '#statusalert');
+        }); // end reset password status alert listener
+            
+        
+        $(document).on('click', '#resetpasswordbutton', function() {
+            var target_user = $(this).attr('value');
+            
+            $.ajax({
+                type: 'POST',
+                data: {username: target_user},
+                url: './internal/resetpassword.php',
+                success: function(data){
+                    if(data=='success'){
+                        $('#statusalert').css({ 'display': 'none' }).fadeOut(200);
+                        $('#statustrigger').click();
+                    }
+                }
+            });
+            return false;
+        });
+        
+        // this listens for edituser clicks
+        $(document).on('click', '#edituser', function() {
+            var target_user = $(this).attr('value');
+            
+            $.ajax({
+                type: 'POST',
+                data: {username: target_user},
+                url: './internal/getuser.php',
+                dataType: 'json',
+                success: function(data){
+                    $('#first').val(data.first);
+                    $('#last').val(data.last);
+                    $('#username').val(target_user).prop('disabled', 'disabled');
+                    $('#password').val('********').prop('disabled', 'disabled');
+                    if(data.isadmin==1) { $('#isadmin').prop('checked', true) } else { $('#isadmin').prop('checked', false) };
+                    manualModal('#adminusers', '#adminuserdetail');
+                }
+            });   
+        }); // end on edituser click
+        
+        // listens for editloaner clicks
+        $(document).on('click', '#editloaner', function() {
+            var target_loaner = $(this).attr('value');
+            
+            $.ajax({
+                type: 'POST',
+                data: {asset_tag: target_loaner},
+                url: './internal/getloaner.php',
+                dataType: 'json',
+                success: function(data) {
+                    $('#asset_tag').val(target_loaner);
+                    if(data.kind=='Mac') { $('#macradio').prop('checked', true) } else { $('#pcradio').prop('checked', true) };
+                    $('#serial_num').val(data.serial_num);
+                    $('#issues').val(data.issues);
+                    $('#original_tag').val(target_loaner);
+                    getOSes(data.kind);
+                    manualModal('#adminloaners', '#adminloanerdetail');
+                }
+            });
+        }); // end on editloaner click
+        
+        // deleteuser listener
+        $(document).on('click', '#deleteuser', function() {
+            $('#deleteloanerbutton').hide();
+            $('#resetpasswordbutton').hide();
+            var target_user = $(this).attr('value');
+            $('#deleteuserbutton').attr('value', target_user).show();
+            manualModal('#adminusers', '#statusalert');
+        }); // end deleteuser listener
+        
+        // deleteloaner listener
+        $(document).on('click', '#deleteloaner', function() {
+            $('#deleteuserbutton').hide();
+            $('#resetpasswordbutton').hide();
+            var target_loaner = $(this).attr('value');
+            $('#deleteloanerbutton').attr('value', target_loaner).show();
+            manualModal('#adminloaners', '#statusalert');
+        });
+        
+        // delete user confirm button listener
+        $(document).on('click', '#deleteuserbutton', function() {
+            var target_user = $(this).attr('value');
+            var result = null;
+            $.ajax({
+                type: 'POST',
+                data: {username: target_user},
+                url: './internal/deleteuser.php',
+                success: function(data){
+                    if(data=='success'){
+                        manualModal('#statusalert', '#statusupdate');
+                        $('#listofusers').html('');
+                        userList();
+                    }
+                }
+            });
+        }); // end deleteuserbutton listener
+        
+        // delete loaner confirm button listener
+        $(document).on('click', '#deleteloanerbutton', function() {
+            var target_loaner = $(this).attr('value');
+            var result = null;
+            $.ajax({
+                type: 'POST',
+                data: {asset_tag: target_loaner},
+                url: './internal/deleteloaner.php',
+                success: function(data){
+                    if(data=='success'){
+                        manualModal('#statusalert', '#statusupdate');
+                        $('#listofloaners').html('');
+                        loanerList();
+                    }
+                }
+            });
+        }); // end deleteloanerbutton listener
+        
+        // show add/edit modal when clicking 'add user'
+        $(document).on('click', '#adduserbutton', function() {
+            $('#adminusers').addClass('hidden').fadeOut(100);
+            $('#username').removeProp('disabled');
+            $('#password').removeProp('disabled');
+            $('#userdetailform').trigger('reset');
+            manualModal('#adminusers', '#adminuserdetail');
+        }); // end on adduserbutton click
+        
+        // show add/edit modal when clicking 'add loaner'
+        $(document).on('click', '#addloanerbutton', function() {
+            $('#adminloaners').addClass('hidden').fadeOut(100);
+            $('#loanerdetailform').trigger('reset');
+            manualModal('#adminloaners', '#adminloanerdetail');
+        }); // end on addloanerbutton click
+            
+        
+        // submit user data listener
+        $(document).on('click', '#submituser', function() {
+            var first = $('#first').val();
+            var last = $('#last').val();
+            var username = $('#username').val();
+            var password = $('#password').val();
+            var isadmin = (($('#isadmin').prop('checked'))==true) ? 1 : 0;
+            var result = null;
+            $.ajax({
+                type: 'POST',
+                data: {first: first, last: last, username: username, password: password, isadmin: isadmin},
+                url: './internal/updateuser.php',
+                async: false,
+                success: function(data) {
+                    if(data=='success'){
+                        manualModal('#adminuserdetail', '#statusupdate');
+                        userList();
+                    }
+                }
+            });
+            return false;
+        }); // end submit user data listener
+        
+        // submit loaner data listener
+        $(document).on('click', '#submitloaner', function(event) {
+            event.preventDefault();
+            var asset_tag = $('#asset_tag').val();
+            var kind = $('#pcradio:checked, #macradio:checked').val();
+            var os_version = $('#os_version').val();
+            var serial_num = $('#serial_num').val().toUpperCase();
+            var issues = $('#issues').val();
+            var original_tag = $('#original_tag').val();
+            var result = null;
+            $.ajax({
+                type: 'POST',
+                data: {asset_tag: asset_tag, kind: kind, os_version: os_version, serial_num: serial_num, issues: issues, original_tag: original_tag},
+                url: './internal/updateloaner.php',
+                async: false,
+                success: function(data) {
+                    if(data=='success'){
+                        manualModal('#adminloanerdetail', '#statusupdate');
+                        loanerList();
+                    }
+                }
+            });
+        });
+        // end submit loaner data
+        
+    userList(); // to populate user list on page load
+    loanerList(); // to populate loaner list on page load
+    }); // end ready</script>
+</head>
+<body>
+    <div id='mainwrap'>
+        <h2 class='label'>Admin Super Powers</h2>
+        <div id='menu'>
+            <button id='toggleusers' class='button' rel='leanModal' href='#adminusers'>Users</button>
+            <button id='toggleloaners' class='button' rel='leanModal' href='#adminloaners'>Loaners</button>
+        </div>
+    </div>
+    <div id='adminusers' class='hidden modal'>
+        <ul id='listofusers'>
+        </ul>
+        <button id='adduserbutton' class='button'>Add New User</button>
+    </div>
+    <div id='adminloaners' class='hidden modal'>
+        <h3 id='mustbecheckedin'>NOTICE: You can only edit/delete loaners that are checked in.</h3>
+        <ul id='listofloaners'>
+        </ul>
+        <button id='addloanerbutton' class='button'>Add New Loaner</button>
+    </div>
+    <div id='adminuserdetail' class='hidden modal'>
+        <h1>Add/Edit User</h1>
+        <form id='userdetailform'>
+            <label for='first'>First:</label>
+            <input type='text' class='inputtext' id='first' name='first' />
+            <label for='last'>Last:</label>
+            <input type='text' class='inputtext' id='last' name='last' />
+            <label for='username'>Username:</label>
+            <input type='text' class='inputtext' id='username' name='username' />
+            <label for='password'>Password:</label>
+            <input type='password' class='inputtext' id='password' name='password' />
+            <label for='isadmindiv'>Admin?</label>
+            <div id='isadmindiv' class="onoffswitch">
+                <input type="checkbox" name="isadmin" class="onoffswitch-checkbox" id="isadmin" />
+                <label class="onoffswitch-label" for="isadmin">
+                    <div class="onoffswitch-inner"></div>
+                    <div class="onoffswitch-switch"></div>
+                </label>
+            </div>
+            <input type='submit' class='button' id='submituser' name='submituser' value='save' />
+        </form>
+    </div>
+    <div id='adminloanerdetail' class='hidden modal'>
+        <h1>Add/Edit Loaner</h1>
+        <form id='loanerdetailform'>
+            <label for='asset_tag'>Asset Tag:</label>
+            <input type='text' class='inputtext' id='asset_tag' name='asset_tag' />
+            <div id='kindradiobutton'>
+                <div id='macradiodiv' class='radiodiv'>
+                    <input type='radio' id='macradio' name='kind' value='Mac' />
+                    <label for='macradio'>Mac</label>
+                </div>
+                <div id='pcradiodiv' class='radiodiv'>
+                    <input type='radio' id='pcradio' name='kind' value='PC' />
+                    <label for='pcradio'>PC</label>
+                </div>
+            </div>
+            <label for='os_version'>Operating System:</label>
+            <select id='os_version'></select>
+            <label for='serial_num'>Serial Number:</label>
+            <input type='text' class='inputtext' id='serial_num' name='serial_num' />
+            <label for='issues'>Known Issues:</label>
+            <textarea id='issues' class='inputtext' rows='4' columns='40'></textarea>
+            <input type='hidden' id='original_tag' name='original_tag' />
+            <input type='submit' class='button' id='submitloaner' name='submitloaner' value='save' />
+        </form>
+    </div>
+    <div id='statusalert' class='hidden modal'>
+        <h1>Are You Sure?</h1>
+        <div id='statusalertbutton'>
+            <button id='deleteuserbutton' class='button'>Delete User</button>
+            <button id='deleteloanerbutton' class='button'>Delete Loaner</button>
+            <button id='resetpasswordbutton' class='button'>Reset Password</button>
+        </div>
+    </div>
+    <div id='login' class='hidden'>
+        <h1>Log In</h1>
+        <form id='loginform' name='loginform' method='post'>
+            <label for='loginusername'>Username:</label>
+            <input type='text' name='username' id='loginusername' class='inputtext' tabindex='1' />
+            <label for='loginpassword'>Password:</label>
+            <input type='password' name='password' id='loginpassword' class='inputtext' tabindex='2' />
+            <input type='submit' name='loginbutton' id='loginbutton' class='button' value='log in' />
+        </form>
+    </div>
+    <div id='statusupdate' class='hidden'>
+            <h1>Success!</h1>
+            <p id='statusmessage'></p>
+            <button id='statusconfirm' class='button'>OK</button>
+    </div>
+    <div id='adminuserdetailtrigger' rel='leanModal' href='#adminuserdetail'></div>
+    <div id='logintrigger' rel='leanModal' href='#login'></div>
+    <div id='statustrigger' rel='leanModal' href='#statusupdate'></div>
+    <div id='login_overlay'></div>
+</body>
+</html>

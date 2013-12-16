@@ -1,0 +1,570 @@
+body {
+    font-family: 'Helvetica Neue', Helvetica, Verdana, sans-serif;
+    background: #2ecd7e;
+}
+
+.inputtext, .inputnum {
+    display: block;
+    padding: 6px 5px;
+    font-family: 'Helvetica Neue', Helvetica, Verdana, sans-serif;
+    color: #7988a3;
+    font-size: 1.2em;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.8);
+    background-color: #fff;
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#edf3f9), to(#fff));
+    background-image: -webkit-linear-gradient(top, #edf3f9, #fff);
+    background-image: -moz-linear-gradient(top, #edf3f9, #fff);
+    background-image: -ms-linear-gradient(top, #edf3f9, #fff);
+    background-image: -o-linear-gradient(top, #edf3f9, #fff);
+    background-image: linear-gradient(top, #edf3f9, #fff);
+    border: 1px solid;
+    border-color: #abbce8 #c3cae0 #b9c8ef;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px rgba(255, 255, 255, 0.4);
+    -moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px rgba(255, 255, 255, 0.4);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px rgba(255, 255, 255, 0.4);
+    -webkit-transition: all 0.25s linear;
+    -moz-transition: all 0.25s linear;
+    transition: all 0.25s linear;
+}
+
+.inputtext:focus, .inputnum:focus {
+    outline: none;
+    color: #525864;
+    border-color: #84c0ee;
+    -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15), 0 0 7px #96c7ec;
+    -moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15), 0 0 7px #96c7ec;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15), 0 0 7px #96c7ec;
+}
+
+.inputtext, #kindradiobutton, .chosen-container {
+    width: 96%;
+    margin-bottom: 15px;
+}
+
+.inputtext:disabled {
+    background-color: #DDD;
+    background-image: none;
+}
+
+#numberwrap {
+    width: 96%;
+    height: 60px;
+}
+
+#floorwrap, #deskwrap {
+    position: relative;
+    display: inline-block;
+    width: 45%;
+}
+
+#floor, #desk {
+   width: 100%; 
+}
+
+#floorwrap {
+    float: left;
+}
+
+#deskwrap {
+    float:right;
+}
+
+#extension {
+    margin-bottom: 18px;
+    width: 96%;
+}
+
+.button {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    display: block;
+    outline: 0;
+    border: 0;
+    color: #edf4f9;
+    text-decoration: none;
+    background-color: #1C82CE;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    font-size: 0.9em;
+    font-weight: bold;
+    padding: 8px 18px 8px 18px;
+    line-height: normal;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    text-transform: uppercase;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.button:hover {
+  color: #fff;
+  background-color: #03A5FF;
+}
+
+.button:active {
+  -webkit-box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.1);
+  -moz-box-shadow:inset 0 1px 5px rgba(0, 0, 0, 0.1);
+  box-shadow:inset 0 1px 5px rgba(0, 0, 0, 0.1);
+}
+
+#lean_overlay {
+    position: fixed;
+    z-index:100;
+    top: 0px;
+    left: 0px;
+    height:100%;
+    width:100%;
+    background: #000;
+    display: none;
+}
+
+.modal_close {
+    background:url("../images/modal_close.png") repeat scroll 0 0 rgba(0, 0, 0, 0);
+    display: block;
+    height: 14px;
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: 14px;
+    z-index:2;
+    cursor: pointer;
+}
+
+#navbardiv {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#topbar {
+    list-style: none;
+}
+
+#topbar li, #togglesearch {
+    height: auto;
+    width: auto;
+    position: relative;
+    display: inline-block;
+}
+
+#mainwrap {
+	height: 600px;
+/*	border: 2px dashed #0f0f0f; */
+	margin: auto;
+	text-align: center;
+}
+
+#apple, #windows {
+	height: 300px;
+	width: 300px;
+/*    border: 2px dashed #999; */
+    position: relative;
+	display: inline-block;
+	margin: 150px 70px 0px 70px;
+	overflow: hidden;
+    cursor: pointer;
+    z-index: 20;
+}
+
+#apple {
+	background-image: url(../images/applewhitefill.png);
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: 100%;
+}
+    
+#windows {
+    background-image: url(../images/windowswhitefill.png);
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: 100%;
+}
+
+#avail, #checked {
+	height: 590px;
+	width: 800px;
+/*	border: 2px dashed #999; */
+	display: inline-block;
+    margin: 5px;
+}
+
+.icon_wrapper {
+	height: 600px;
+	width: 800px;
+/*	border: 1px dashed #0f0f0f; */
+	margin-top: 50px;
+    overflow: hidden;
+}
+
+.icon {
+	height: 125px;
+	width: 175px;
+    border-radius: 6px;
+    display: inline-block;
+	margin: 20px 40px;
+	background-image: url(../images/laptopoff.png);
+/*    background-color: #1C82CE; */
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: 95%;
+    position: relative;
+    cursor: pointer;
+}
+
+.iconscreen {
+    height: 65%;
+    width: 70.75%;
+    background-color: #004;
+    position: absolute;
+    top: 17.5%;
+    left: 15%;
+    border-radius: 2%;
+    overflow: hidden;
+}
+
+.iconscreen .screentag {
+    color: #FFF;
+    font-size: 1.2em;
+    font-weight: bold;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    top: 35%;
+    display: inline-block;
+    position: relative;
+}
+
+#avail.hidden, #checked.hidden, #login.hidden, #logout.hidden, #loginshow.hidden, #logoutshow.hidden, #checkout.hidden, #checkin.hidden, .screentag.hidden, #statusupdate.hidden, #searchdiv.hidden, #searchresults.hidden, #adminusers.hidden, #adminloaners.hidden, #adminuserdetail.hidden, #adminloanerdetail.hidden, #statusalert.hidden, #changepw.hidden, #pcradio, #macradio {
+    display: none;
+}
+
+#pwchgstatus {
+    margin: 3px;
+    visibility: hidden;
+}
+
+#adminlink {
+    text-decoration: none;
+}
+
+#login, #changepw {
+    width: 300px;
+    padding: 15px 20px;
+    background: #fff;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    left: 50%;
+    margin-left: -150px;
+}
+
+#login h1, #changepw h2, #checkout h1, #checkin h2, #logout h1, #statusupdate h1, #searchdiv h1, #adminuserdetail h1, #adminloanerdetail h1, #statusalert h1, .label {
+    color: #444;
+    font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size: 2.2em;
+    letter-spacing: -0.05em;
+    line-height: 1.5em;
+    margin-bottom: 20px;
+    overflow: hidden;
+    padding: 0.1em 0;
+    position: relative;
+    text-align: center;
+    white-space: nowrap;
+}
+
+#macorpc, #available, #checkedout, .label {
+    color: #FFF;
+    margin-bottom: 0px;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+}
+
+#mustbecheckedin, #pwchgstatus {
+    color: #DE6C6C;
+    font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size: 1em;
+    letter-spacing: -0.05em;
+    margin-bottom: 10px;
+    overflow: hidden;
+    padding: 0.1em 0;
+    position: relative;
+    text-align: center;
+    white-space: nowrap;
+}
+
+#available {
+    background-repeat: no-repeat;
+    background-position: 278px 10px;
+    background-size: 5%;
+}
+
+#checkedout {
+    background-repeat: no-repeat;
+    background-position: 246px 10px;
+    background-size: 5%;
+}
+
+#login label, #changepw label, #checkout label, #adminuserdetail label, #adminloanerdetail label {
+    color: #7C8291;
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 3px;
+    width: auto;
+}
+
+.radiodiv label {
+    display: inline-block;  
+    cursor: pointer;  
+    position: relative;  
+    padding-left: 25px;  
+    margin-right: 15px;  
+    font-size: 13px;
+}
+
+.radiodiv label:before {
+    content: "";  
+    display: inline-block;  
+    width: 16px;  
+    height: 16px;  
+    margin-right: 10px;  
+    position: absolute;  
+    left: 0;  
+    top: -1px;
+    border-radius: 10px;
+    background-color: #AAA;  
+    box-shadow: inset 0px 2px 3px 0px rgba(0, 0, 0, .75), 0px 1px 0px 0px rgba(255, 255, 255, .8);
+}
+
+input[type='radio']:checked + label:before {
+    content: "\2022";  
+    color: #FFF;  
+    font-size: 36px;  
+    text-align: center;
+    line-height: 15px;
+}
+
+#loginbutton, #changepwconfirm {
+    margin-left: 106px;
+}
+
+#checkoutbutton {
+    margin-left: 140px;
+}
+
+#checkinconfirm, #logoutbutton {
+    margin-left: 98px;
+}
+
+#checkout, #searchdiv {
+    width: 400px;
+    padding: 15px 20px;
+    background: #fff;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    left: 50%;
+    margin-left: -200px;
+}
+
+#checkin, #logout, #statusupdate, #adminusers, #adminuserdetail, #adminloaners, #adminloanerdetail, #statusalert {
+    width: 300px;
+    padding: 15px 20px;
+    background: #fff;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    left: 50%;
+    margin-left: -150px;
+}
+
+#statusalertbutton button {
+    margin: 0 auto;
+    display: block;
+}
+
+#checkin .infocheckin {
+    padding: 2px;
+    margin-bottom: 5px;
+}
+
+#adminusers, #adminloaners {
+    width: 600px;
+}
+
+#listofloaners li, #listofusers li {
+    font-size: 1em;
+    padding: 0.6em;
+    list-style: none;
+}
+
+#listofloaners li:nth-child(2n+0), #listofusers li:nth-child(2n+0) {
+    background: #efefef;
+}
+
+.userwrap *, .loanerwrap * {
+    display: inline-block;
+}
+
+#adminusers button {
+    display: inline-block;
+}
+
+.linkwrap {
+    float: right;
+}
+
+.link {
+    cursor: pointer;
+    -webkit-transition: 0.5s;
+    -moz-transition: 0.5s;
+    -o-transition: 0.5s;
+    -ms-transition: 0.5s;
+    transition: 0.5s;
+}
+
+.link:hover {
+    color: transparent;
+    text-shadow: 0 0 0.5px #1C82CE;
+}
+
+#statusconfirm {
+    margin-left: 120px;
+}
+
+#os_version {
+    width: 288px;
+}
+
+/* #searchdiv {
+    padding-bottom: 10px;
+}
+
+#searchform {
+    width: 400px;
+    display: inline-block;
+}
+
+#searchform *, */ #kindradiobutton div {
+    position: relative;
+    display: inline-block;
+}
+/*
+#searchparams {
+    width: 65%;
+}
+
+#searchbutton {
+    vertical-align: top;
+    margin-left: 15px;
+}
+
+#searchresults {
+    width: auto;
+    overflow-y: scroll;
+}
+*/
+#menu {
+    width: 400px;
+    position: absolute;
+    left: 50%;
+    margin-left: -200px;
+    text-align:center;
+}
+
+#menu button {
+    display: inline-block;
+    position: relative;
+    margin: 10px;
+}
+
+#addloanerbutton, #adduserbutton {
+    margin-top: 15px;
+}
+
+#login_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #000;
+    width: 100%;
+    height: 100%;
+    z-index: 200;
+}
+
+.onoffswitch {
+    position: relative; width: 90px;
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+}
+
+.onoffswitch-checkbox {
+    display: none;
+}
+
+.onoffswitch-label {
+    display: block; overflow: hidden; cursor: pointer;
+    border: 2px solid #1C82CE; border-radius: 4px;
+}
+
+.onoffswitch-inner {
+    width: 200%; margin-left: -100%;
+    -moz-transition: margin 0.3s ease-in 0s; -webkit-transition: margin 0.3s ease-in 0s;
+    -o-transition: margin 0.3s ease-in 0s; transition: margin 0.3s ease-in 0s;
+}
+
+.onoffswitch-inner:before, .onoffswitch-inner:after {
+    float: left; width: 50%; height: 30px; padding: 0; line-height: 30px;
+    font-size: 15px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
+    -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; text-transform: uppercase;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+}
+
+.onoffswitch-inner:before {
+    content: "YES";
+    padding-left: 10px;
+    background-color: #1C82CE; color: #FFFFFF;
+}
+
+.onoffswitch-inner:after {
+    content: "NO";
+    padding-right: 10px;
+    background-color: #EEEEEE; color: #1C82CE;
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#edf3f9), to(#fff));
+    background-image: -webkit-linear-gradient(top, #edf3f9, #fff);
+    background-image: -moz-linear-gradient(top, #edf3f9, #fff);
+    background-image: -ms-linear-gradient(top, #edf3f9, #fff);
+    background-image: -o-linear-gradient(top, #edf3f9, #fff);
+    background-image: linear-gradient(top, #edf3f9, #fff);
+    text-align: right;
+}
+
+.onoffswitch-switch {
+    width: 18px; margin: 6px;
+    background: #FFFFFF;
+    border: 2px solid #1C82CE; border-radius: 4px;
+    position: absolute; top: 0; bottom: 0; right: 56px;
+    -moz-transition: all 0.3s ease-in 0s; -webkit-transition: all 0.3s ease-in 0s;
+    -o-transition: all 0.3s ease-in 0s; transition: all 0.3s ease-in 0s; 
+}
+
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+    margin-left: 0;
+}
+
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+    right: 0px; 
+}

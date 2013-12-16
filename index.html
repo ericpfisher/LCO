@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <link type="text/css" rel="stylesheet" href="css/reset.css" />
+        <link type="text/css" rel="stylesheet" href="jquery-ui/css/no-theme/jquery-ui-1.10.3.custom.min.css" />
+        <link type="text/css" rel="stylesheet" href="css/chosen.css" />
+		<link type="text/css" rel="stylesheet" href="css/main.css" />
+		<script src="js/jquery-1.10.2.min.js"></script>
+        <script src="jquery-ui/js/jquery-ui-1.10.3.custom.min.js"></script>
+        <script src="js/jquery.color-2.1.2.min.js"></script>
+        <script src="js/jquery.leanModal.min.js"></script>
+        <script src="js/chosen.jquery.js"></script>
+		<script>
+		$(document).ready(function() {
+            function get_count(category) {
+                var lastcheckout = '';
+                $.ajax({
+                    type: 'POST',
+                    data: {kind: category},
+                    url: './internal/loanercount.php',             
+                    dataType: 'json',   // expect json to be returned                
+                    success: function(data) {
+                        $.each(data, function(key, value) {
+                            if(value.length > 0) {
+                                $.each(value, function(index, asset_data) {
+                                    lastcheckout = (get_last_checkout(asset_data.asset_tag));
+                                    $('#' + key + ' .icon_wrapper').append("<div class='icon'><div class='iconscreen' value='"+lastcheckout+"'><p class='screentag hidden'>"+asset_data.asset_tag+"</p></div></div>");
+                                    $('.icon:not([value])').attr('value', JSON.stringify(asset_data) );
+                                }); // end each loop
+                            } else if(value.length <= 0) {
+                                $('#' + key + ' .icon_wrapper').append("<h2 class='label'>No loaners.</h2>");
+                            } else {
+                                alert("An unexpected error occurred.");
+                            } // end if/elseif/else
+                        }); // end jquery each loop
+                    } // end callback function
+                }); // end .ajax()
+            }; // end get_count
+            
+            function get_detail(element) {
+                var x = $(element).attr('value');
+                var json = $.parseJSON(x);
+                return json;
+            }; // end get_detail
+            
+            function get_last_checkout(tag) {
+                var result = null;
+                $.ajax({
+                    type: 'POST',
+                    data: {asset_tag: tag},
+                    url: './internal/lastcheckout.php',
+                    dataType: 'json',
+                    async: false,
+                    success: function(data){
+                        result = JSON.stringify(data);
+                    }
+                });
+                return result;
+            }; // end get_last_checkout
+            
+            if (sessionStorage.getItem('currentuser')) {
+                $('#togglelogin').attr('href', '#logout');
+                $('#loginshow').addClass('hidden');
+                $('#logoutshow').text('Log out, '+sessionStorage.getItem('currentuser')).removeClass('hidden');
+            }
+            
+            var kind = null;
+            
+            var html_array = [
+                "<h1 id='whichloaner' class='label' id='macorpc'>Which type of loaner?</h1><div id='apple' value='Mac'></div>\
+                <div id='windows' value='PC'></div>",
+                "<div id='avail'><h1 class='label' id='available'>Available:</h1><div class='icon_wrapper'></div></div>\
+                <div id='checked'><h1 class='label' id='checkedout'>Checked Out:</h1><div class='icon_wrapper'></div></div>"]; // end html_array
+            
+            $('.wrapper').append(html_array[0]);
+            $('#viewavail').hide();
+            $('#viewchecked').hide();
+			$('body').hide().fadeIn(1500);
+            
+            
+            /* Listeners */
+            // opens admin page in new tab/window
+            $(document).on('click', '#adminlink', function(event) {
+                event.preventDefault();
+                window.open($(this).attr('href'), '_blank');
+            }); // end admin button listener
+
+            $(document).on('click', '#statusconfirm', function() {
+                $('#statusupdate').fadeOut(200);        
+                $('#lean_overlay').click();
+            });
+
+            $(document).on('click', '#userpwchange', function() {
+                if(!(sessionStorage.getItem('currentuser'))) {
+                    $('#togglelogin').click();
+                    return false;
+                } else {
+                    $('#changepwtrigger').click();
+                };
+            });
+
+            $(document).on('click', '#changepwconfirm', function(event) {
+                event.preventDefault();
+                var oldpw = $('#oldpw').val();
+                var newpw = $('#newpw').val();
+                var confirmnewpw = $('#confirmnewpw').val();
+                var username = sessionStorage.getItem('currentuser');
+
+                if((!oldpw) || (!newpw) || (!confirmnewpw)){
+                  $('#changepw').effect('shake');
+                    $('#pwchgstatus').text('Fields cannot be blank.').css('visibility', 'visible').fadeTo(400,1).delay(2000).fadeTo(400,0);
+                    $('#changepwform').trigger('reset');
+                    $('#oldpw').focus();  
+                } else if(newpw!=confirmnewpw){
+                    $('#changepw').effect('shake');
+                    $('#pwchgstatus').text('New passwords do not match.').css('visibility', 'visible').fadeTo(400,1).delay(2000).fadeTo(400,0);
+                    $('#changepwform').trigger('reset');
+                    $('#oldpw').focus();
+                } else {
+
+                    $.ajax({
+                        type: 'POST',
+                        data: {username: username,
+                               oldpw: oldpw,
+                               newpw: newpw
+                              },
+                        url: './internal/changepassword.php',
+                        success: function(data){
+                            if(data=='success'){
+                                $('#changepw').css({ 'display': 'none' }).fadeOut(200);
+                                setTimeout(function() {
+                                    var modal_height=$('#statusupdate').outerHeight();
+                                    var modal_width=$('#statusupdate').outerWidth();
+                                    $('#statusupdate').css({
+                                        "display":"block",
+                                        "position":"fixed",
+                                        "opacity":1,
+                                        "z-index":11000,
+                                        "left":50+"%",
+                                        "margin-left":-(modal_width/2)+"px",
+                                        "top":"100px"});
+                                    $('#statusupdate').fadeIn(200,1);
+                                }, 300);
+                                $('#changepwform').trigger('reset');
+                            } else if(data=='wrongold'){
+                                $('#changepw').effect('shake');
+                                $('#pwchgstatus').text('Old password was incorrect.').css('visibility', 'visible').fadeTo(400,1).delay(2000).fadeTo(400,0);
+                                $('#oldpw').focus();
+                            } else {
+                                $('#changepw').effect('shake');
+                                $('#pwchgstatus').text('Unexpected error occured.').css('visibility', 'visible').fadeTo(400,1).delay(2000).fadeTo(400,0);
+                                $('#oldpw').focus();
+                                $('#changepwform').trigger('reset');
+                            }
+                        }
+                    });
+                }
+            });
+            
+            $(document).on('click', '#checkouttrigger', function() {
+                $('#checkouttech').chosen({width: '100%'});
+                if(sessionStorage.getItem('isadmin')=='yes'){
+                    $('#checkouttech').removeProp('disabled').empty();
+                    $.ajax({
+                        type: 'POST',
+                        url: './internal/userlist.php',
+                        dataType: 'json',
+                        async: false,
+                        success: function(data){
+                            $.each(data, function(index, techdata){
+                                if(techdata.username=='admin'){
+                                    return true;
+                                }
+                                $('#checkouttech').append("<option value='"+techdata.username+"'>"+techdata.first+" "+techdata.last+"</option");
+                            });
+                        }
+                    });
+                } else {
+                    $('#checkouttech').empty().append("<option value='"+sessionStorage.getItem('currentuser')+"'>"+sessionStorage.getItem('currentuser')+"</option>");
+                    $('#checkouttech').prop('disabled', 'disabled');
+                }
+                $('#checkouttech').trigger('chosen:updated');
+            });
+
+            // Screen listener for loaner icons
+            $(document).on({
+                mouseenter: function() { // DELAY THIS WITH HOVERINTENT?!
+                    $(this).children('.iconscreen').animate({
+                        backgroundColor: '#FA9B53'
+                    }, {
+                        duration: 300,
+                        queue: false
+                    });
+                    $(this).find('.screentag').clearQueue().fadeTo(500,1);
+                },                                                   
+                mouseleave: function() {
+                    $(this).children('.iconscreen').animate({
+                        backgroundColor: '#004'
+                    }, {
+                        duration: 300,
+                        queue: false
+                    });
+                    $(this).find('.screentag').hide().clearQueue();
+                }
+            }, '.icon');
+            
+            // Log In button listener
+          $('#loginbutton').click(function() {
+                user = $('#username').val();
+                pass = $('#password').val();
+                var result = null;
+                if($('#username').val()==''){
+                    $('#loginform').submit(function() {
+                        return false;
+                    });
+                } else if($('#password').val()==''){
+                    $('#loginform').submit(function() {
+                        return false;
+                    });
+                } else {
+                    $.ajax({
+                        type: 'POST',
+                        data: {username: user, password: pass},
+                        async: false,
+                        url: './internal/login.php',
+                        dataType: 'json',
+                        success: function(data){
+                            result = data;
+                        }
+                    });
+                };
+                if(result != null){
+                    if(result=='yes'){
+                        sessionStorage.setItem('isadmin', 'yes');
+                    } else {
+                        sessionStorage.setItem('isadmin', 'no');
+                    }
+                    sessionStorage.setItem('currentuser', user);
+                    $('#lean_overlay').trigger('click');
+                    $('#togglelogin').attr('href', '#logout');
+                    $('#loginshow').addClass('hidden');
+                    $('#logoutshow').text('Log out, '+sessionStorage.getItem('currentuser')).removeClass('hidden');
+                    return false;
+                } else {
+                    $('#login').effect('shake');
+                    return false;
+                };
+          });
+            
+            // Log Out button listener
+            $('#logoutbutton').click(function() {
+                sessionStorage.clear();
+                $('#lean_overlay').click();
+                $('#togglelogin').attr('href','#login');
+                $('#logoutshow').addClass('hidden');
+                $('#loginshow').removeClass('hidden');
+                $('#loginform').trigger('reset');
+                return false;
+            });
+            
+            // Check Out listener
+            $('#checkoutbutton').click(function() {
+                var tech = null;
+                if(sessionStorage.getItem('isadmin')=='yes'){
+                    tech = $('#checkouttech').val();
+                } else {
+                    tech = sessionStorage.getItem('currentuser');
+                }
+                var result = null;
+                $.ajax({
+                    type: 'POST',
+                    data: {first_name: $('#firstname').val(),
+                           last_name: $('#lastname').val(),
+                           user_ext: $('#extension').val(),
+                           floor: $('#floor').val(),
+                           desk: $('#desk').val(),
+                           asset_tag: $('#assettagout').val(),
+                           tech_out: tech
+                          },
+                    url: './internal/checkout.php',
+                    async: false,
+                    success: function(data){
+                        result = data;
+                    }
+                });
+                if(result=='success'){
+                    $('#lean_overlay').click();
+                    $('#checkoutform').trigger('reset');
+                    $('.wrapper').fadeOut(200, function() {
+                        $(this).html( html_array[1]).load().hide();
+                        get_count(kind);
+                        if(kind=='Mac') {
+                            $('#available, #checkedout').css({
+                            backgroundImage: 'url(images/applewhitefill.png)'
+                            });
+                        } else if(kind=='PC') {
+                            $('#available, #checkedout').css({
+                                backgroundImage: 'url(images/windowswhitefill.png)'
+                            });
+                        } else {
+                            alert("An unexpected error occurred.");
+                        }
+                        $(this).fadeIn(200);
+                        $('#statustrigger').click();
+                        $(this).find('#checked').addClass('hidden');
+                    });
+                    return false;
+                } else {
+                    alert('An unexpected error occurred: checkout.');
+                }
+            });
+            
+            // Check In listener
+            $('#checkinconfirm').click(function() {
+                var tech = null;
+                if(!(sessionStorage.getItem('currentuser'))) {
+                    $('#togglelogin').click();
+                } else {
+                    tech = sessionStorage.getItem('currentuser');
+                }
+                var result = null;
+                $.ajax({
+                    type: 'POST',
+                    data: {asset_tag: $('#assettagin').val(),
+                           tech_in: tech
+                          },
+                    url: './internal/checkin.php',
+                    async: false,
+                    success: function(data){
+                        result = data;
+                    }
+                });
+                if(result=='success'){
+                    $('#lean_overlay').click();
+                    $('.wrapper').fadeOut(200, function() {
+                        $(this).html( html_array[1]).load().hide();
+                        get_count(kind);
+                        $(this).fadeIn(200);
+                        $('#statustrigger').click();
+                        $(this).find('#avail').addClass('hidden');
+                    });
+                    return false;
+                } else {
+                    alert('An unexpected error occurred: checkin.');
+                }
+            });
+            
+            // Reset button listener
+            $('#reset').on('click', function () {
+                $('#viewavail, #viewchecked').fadeOut(400);
+                $('.wrapper').fadeOut(400, function() {
+                    $(this).html( html_array[0] ).fadeIn(400);
+                    if($('body').css('backgroundColor')!='#2ecd7e') $('body').animate({ backgroundColor: '#2ecd7e' }, 400);
+                }); // end fadeOut
+            }); // end #reset listener
+             
+            // Home page large icon selector
+            $('body').on('click', '#apple, #windows', function() {
+                kind = $(this).attr('value');
+                $(this).parent().fadeOut(400, function() {
+                    $(this).html( html_array[1] ).load().hide();
+                    if(kind=='Mac') {
+                        $('#available, #checkedout').css({
+                            backgroundImage: 'url(images/applewhitefill.png)'
+                        });
+                    } else if(kind=='PC') {
+                        $('#available, #checkedout').css({
+                            backgroundImage: 'url(images/windowswhitefill.png)'
+                        });
+                    } else {
+                        alert("An unexpected error occurred.");
+                    }
+                    get_count(kind);
+                    $(this).fadeIn(600);
+                    $('#viewchecked').fadeIn(600);
+                    $(this).find('#checked').addClass('hidden');
+                });
+            }); // end large icon selector
+            
+            // Available/Checked switch button listener
+            $(document).on('click', '#viewchecked, #viewavail', function() {
+                var active = $('#mainwrap').find('#avail:not(".hidden"), #checked:not(".hidden")');
+                var inactive = $('#mainwrap').find('#avail.hidden, #checked.hidden');
+                
+                active.fadeOut(400, function() {
+                    $(this).addClass('hidden');
+                    if(inactive.attr('id')=='checked'){
+                        $('#viewchecked').hide();
+                        $('#viewavail').fadeIn(400);
+                        $('body').animate({ backgroundColor: '#DE6C6C' }, 400);
+                    } else {
+                        $('#viewavail').hide();
+                        $('#viewchecked').fadeIn(400);
+                        $('body').animate({ backgroundColor: '#2ecd7e' }, 400);
+                    }
+                    inactive.removeClass('hidden').hide().fadeIn(400);
+                }); // end fadeOut
+            }); // end switch_button listener
+            
+            // Loaner count icon click event
+            $(document).on('click', '.icon', function() {
+                var detail = get_detail($(this));
+                var status = $(this).parent().parent().attr('id');
+                var tag = detail.asset_tag;
+                if(!(sessionStorage.getItem('currentuser'))) {
+                    $('#togglelogin').click();
+                    return false;
+                }
+                if(status=='avail') {
+                    $('#checkouttrigger').click();
+                    $('#assettagout').attr('value', tag);
+                } else if(status=='checked') {
+                    var months = new Array("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
+                    var checkout_detail = get_detail($(this).find('.iconscreen'));
+                    if(checkout_detail.checked_out){
+                        var checkout_date = new Date(checkout_detail.checked_out.replace(/-/g,'/'));
+                        var checkout_day = checkout_date.getDate();
+                        var checkout_month = checkout_date.getMonth();
+                        var checkout_year = checkout_date.getFullYear();
+                    };
+                    $('#lastcheckoutdate').text("Checked Out: " + months[checkout_month] + " " + checkout_day + ", " + checkout_year);
+                    $('#lastcheckoutuser').text("For: " + checkout_detail.first_name + " " + checkout_detail.last_name);
+                    $('#lastcheckoutext').text("Extension: " + checkout_detail.user_ext);
+                    $('#lastcheckoutloc').text("Location: " + checkout_detail.floor + checkout_detail.desk);
+                    $('#lastcheckouttech').text("Technician: " + checkout_detail.tech_out);
+                    $('#checkintrigger').click();
+                    $('#assettagin').attr('value', tag);
+                } else {
+                    alert("An unexpected error occurred.");
+                }
+            }); // end loaner detail listener
+            
+/*            $(document).on('click', '#searchbutton', function() {
+                var params = $('#searchparams').val();
+                $('#searchresults').css({ height: '' }).addClass('hidden').hide().html("");
+                var native_height = 132;
+                if(!params) {
+                    $('#searchdiv').effect('shake');
+                } else {
+                    $.ajax({
+                        type: 'POST',
+                        data: {search_params: params},
+                        url: 'search.php',
+                        async: false,
+                        dataType: 'json',
+                        success: function(data) {
+                            if(data && data.length > 0){
+                                $.each(data, function(entry, details) {
+                                    $('#searchresults').append("<h3>"+details.checked_out+"</h3>\
+                                        <div>\
+                                            <p>Asset: "+details.asset_tag+"</p>\
+                                            <p>User: "+details.first_name+" "+details.last_name+"</p>\
+                                            <p>Extension: "+details.user_ext+"</p>\
+                                            <p>Location: "+details.floor+"."+details.desk+"</p>\
+                                            <p>Out: "+details.checked_out+" - "+details.tech_out+"</p>\
+                                            <p>In: "+details.checked_in+" - "+details.tech_in+"</p>\
+                                        </div>");
+                                });
+                                if($('#searchresults').hasClass('ui-accordion')){
+                                    $('#searchresults').accordion('refresh');
+                                } else {
+                                    $('#searchresults').accordion({collapsible: true, active: false, heightStyle: 'content'});
+                                }
+                                var result_height = $('#searchresults').height();
+                                var search_max_height = (($(window).height())*0.75);
+                                if(result_height >= search_max_height) {
+                                    $('#searchdiv').animate({ height: search_max_height+'px', top: '75px'},{queue: false, duration: 500});
+                                } else {
+                                    $('#searchdiv').animate({ height: (native_height+result_height+156)+'px', top: '150px'},{queue: false, duration: 500});
+                                }
+                                $('#searchresults').removeClass('hidden').fadeIn(400);
+                            } else {
+                                $('#searchdiv').animate({ height: '160px'},{queue: false, duration: 300});
+                                $('#searchresults').append("<p>No results.</p>").removeClass('hidden').fadeIn(400);
+                            }
+                        } 
+                    });
+                }
+                return false;
+            }); // end search button listener */
+            $('#pwchgstatus').fadeTo(100,0); // fades out password form alert listener     
+		}); // end ready
+		</script>
+	</head>
+	<body>
+        <div id='navbardiv'>
+        <ul id='topbar'>
+            <li>
+                <div id='#switch_button'>
+                    <button id='viewchecked' class='button'>Checked Out</button>
+                    <button id='viewavail' class='button'>Available</button>
+                </div>
+            </li>
+            <li><a id='adminlink' href='admin.html'><button id='adminbutton' class='button'>Admin</button></a></li>
+            <li><button id='reset' class='button'>Start Over</button></li>
+            <li><button id='userpwchange' class='button'>Password</button></li>
+            <li>   
+                <div id='togglelogin' rel='leanModal' href='#login'>
+                    <button id='loginshow' class='button'>Log In</button>
+                    <button id='logoutshow' class='button hidden'>Log Out</button>
+                </div>
+            </li>
+<!--        <div id='togglesearch' rel='leanModal' href='#searchdiv'>
+                <button class='button'>Search</button>
+            </div> -->
+        </ul>
+        </div>
+        <div id='mainwrap' class='wrapper'></div>
+        <div id='login' class='hidden'>
+            <h1>Log In</h1>
+            <form id='loginform' name='loginform' method='post'>
+                <label for='username'>Username:</label>
+                <input type='text' name='username' id='username' class='inputtext' tabindex='1' />
+                <label for='password'>Password:</label>
+                <input type='password' name='password' id='password' class='inputtext' tabindex='2' />
+                <input type='submit' name='loginbutton' id='loginbutton' class='button' value='log in' />
+            </form>
+        </div>
+        <div id='logout' class='hidden'>
+            <h1>Log Out?</h1>
+            <button id='logoutbutton' class='button'>Log Out</button>    
+        </div>
+<!--    <div id='searchdiv' class='hidden'>
+            <div id='searchbar'>
+                <form id='searchform' name='searchform' method='post'>
+                    <label for='searchparams'>Search</label>
+                    <input type='text' name='searchparams' id='searchparams' class='inputtext' />
+                    <input type='submit' name='searchbutton' id='searchbutton' class='button' value='search' />
+                </form>
+            </div>
+            <div id='searchresults' class='hidden'>
+            </div>
+        </div> end hide search div -->
+        <div id='checkout' class='hidden'>
+            <h1>Check Out Loaner</h1>
+            <form id='checkoutform' name='checkoutform' method='post'>
+                <label for='firstname'>First:</label>
+                <input type='text' name='firstname' id='firstname' class='inputtext' tabindex='1' required />
+                
+                <label for='lastname'>Last:</label>
+                <input type='text' name='lastname' id='lastname' class='inputtext' tabindex='2' required />
+                <div id='numberwrap'>
+                    <div id='floorwrap'>
+                        <label for='floor'>Floor:</label>
+                        <input name='floor' id='floor' class='inputnum' tabindex='3' required />
+                    </div>
+                    <div id='deskwrap'>
+                        <label for='desk'>Desk:</label>
+                        <input name='desk' id='desk' class='inputnum' tabindex='4' required />
+                    </div>
+                </div>
+                <label for='extension'>Extension:</label>
+                <input name='extension' id='extension' class='inputnum' tabindex='5' required />
+                <label for='checkouttech'>Tech:</label>
+                <select id='checkouttech'></select>
+                <input type='hidden' name='assettag' id='assettagout' value='' required />
+                <input type='submit' name='checkoutbutton' id='checkoutbutton' class='button' value='checkout!' />
+            </form>
+        </div>
+        <div id='checkin' class='hidden'>
+            <h2>Check In Loaner?</h2>
+            <p id='lastcheckoutdate' class='infocheckin'></p>
+            <p id='lastcheckoutuser' class='infocheckin'></p>
+            <p id='lastcheckoutext' class='infocheckin'></p>
+            <p id='lastcheckoutloc' class='infocheckin'></p>
+            <p id='lastcheckouttech' class='infocheckin'></p>
+            <form id='checkinform' name='checkinform' method='post'>
+                <input type='submit' name='checkinconfirm' id='checkinconfirm' class='button' value='check in!' />
+                <input type='hidden' name='assettag' id='assettagin' value='' required />
+            </form>
+        </div>
+        <div id='statusupdate' class='hidden'>
+            <h1>Success!</h1>
+            <p id='statusmessage'></p>
+            <button id='statusconfirm' class='button hideModal'>OK</button>
+        </div>
+        <div id='changepw' class='hidden'>
+            <h2>Change Password</h2>
+            <p id='pwchgstatus'>Placeholder.</p>
+            <form id='changepwform' name='changepwform' method='post'>
+                <label for='oldpw'>Old Password:</label>
+                <input type='password' name='oldpw' id='oldpw' class='inputtext' tabindex='1' required />
+                <label for='newpw'>New Password:</label>
+                <input type='password' name='newpw' id='newpw' class='inputtext' tabindex='2' required />
+                <label for='confirmnewpw'>Confirm New Password:</label>
+                <input type='password' name='confirmnewpw' id='confirmnewpw' class='inputtext' tabindex='3' required />
+                <input type='submit' name='changepwconfirm' id='changepwconfirm' class='button' value='Update!' />
+            </form>
+        </div>
+        <div id='checkouttrigger' rel='leanModal' href='#checkout'></div>
+        <div id='checkintrigger' rel='leanModal' href='#checkin'></div>
+        <div id='logouttrigger' rel='leanModal' href='#logout'></div>
+        <div id='statustrigger' rel='leanModal' href='#statusupdate'></div>
+        <div id='changepwtrigger' rel='leanModal' href='#changepw'></div>
+        <script id='leanmodals'>
+            $('div[rel*=leanModal]').leanModal({
+                top: 150, overlay: 0.45, closeButton: '.hideModal'
+            });
+        </script>
+	</body>
+</html>

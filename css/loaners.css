@@ -1,0 +1,19 @@
+body {
+	width: 900px;
+	text-align: center;
+
+}
+
+.avail, .checked {
+	height: 500px;
+	width: 400px;
+	border: 2px dashed #999;
+	display: inline-block;
+}
+
+.icons {
+	height: 400px;
+	width: 400px;
+	border: 1px dashed #0f0f0f;
+	margin-top: 60px;
+}
