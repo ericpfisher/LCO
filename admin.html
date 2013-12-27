@@ -24,13 +24,13 @@
                     "z-index":11000,
                     "left":50+"%",
                     "margin-left":-(modal_width/2)+"px",
-                    "top":"100px"});
+                    "top":"100px"}).addClass('modal');
                 $(showModal).fadeIn(200,1);
             }, 300);
         };
         
-        $('button[rel*=leanModal]').leanModal({top: 150, overlay: 0.45, closeButton: '.hideModal'});
-        $('div[rel*=leanModal]').leanModal({top: 150, overlay: 0.45, closeButton: '.hideModal'});
+        $('button[rel*=leanModal]').leanModal({top: 100, overlay: 0.45, closeButton: '.hideModal'});
+        $('div[rel*=leanModal]').leanModal({top: 100, overlay: 0.45, closeButton: '.hideModal'});
         $('#logintrigger').click();
         $('#lean_overlay').hide();
         $('#login_overlay').css({ 'display' : 'block', opacity : 0 }).fadeTo(200, 0.5);
@@ -102,9 +102,10 @@
         }; // end userList()
         
         // this gets the list of loaners from the DB
-        function loanerList() {
+        function loanerList(kind) {
             $.ajax({
                 type: 'POST',
+                data: {kind: kind},
                 url: './internal/loanerlist.php',
                 dataType: 'json',
                 success: function(data){
@@ -137,8 +138,13 @@
             userList();
         });
 
-        $(document).on('click', '#toggleloaners', function() {
-            loanerList();
+        $(document).on('click', '#togglemacs, #togglepcs', function() {
+            var kind = $(this).attr('id');
+            if(kind=='togglemacs') {
+                loanerList('Mac');
+            } else if(kind=='togglepcs') {
+                loanerList('PC');
+            }
         });
 
         // listens for pcradio click
@@ -337,9 +343,6 @@
             });
         });
         // end submit loaner data
-        
-    userList(); // to populate user list on page load
-    loanerList(); // to populate loaner list on page load
     }); // end ready</script>
 </head>
 <body>
@@ -347,7 +350,8 @@
         <h2 class='label'>Admin Super Powers</h2>
         <div id='menu'>
             <button id='toggleusers' class='button' rel='leanModal' href='#adminusers'>Users</button>
-            <button id='toggleloaners' class='button' rel='leanModal' href='#adminloaners'>Loaners</button>
+            <button id='togglemacs' class='button' rel='leanModal' href='#adminloaners'>Macs</button>
+            <button id='togglepcs' class='button' rel='leanModal' href='#adminloaners'>PCs</button>
         </div>
     </div>
     <div id='adminusers' class='hidden modal'>

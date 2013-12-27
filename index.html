@@ -12,6 +12,7 @@
         <script src="js/chosen.jquery.js"></script>
 		<script>
 		$(document).ready(function() {
+            // gets a count of available/checkout out loaners from the DB, then appends to the document
             function get_count(category) {
                 var lastcheckout = '';
                 $.ajax({
@@ -37,12 +38,14 @@
                 }); // end .ajax()
             }; // end get_count
             
+            // take string and parse as JSON
             function get_detail(element) {
                 var x = $(element).attr('value');
                 var json = $.parseJSON(x);
                 return json;
             }; // end get_detail
             
+            // get last checkout from Entries DB via asset tag
             function get_last_checkout(tag) {
                 var result = null;
                 $.ajax({
@@ -58,20 +61,24 @@
                 return result;
             }; // end get_last_checkout
             
+            // if there's a current user upon page load, change the login button to logout
             if (sessionStorage.getItem('currentuser')) {
                 $('#togglelogin').attr('href', '#logout');
                 $('#loginshow').addClass('hidden');
                 $('#logoutshow').text('Log out, '+sessionStorage.getItem('currentuser')).removeClass('hidden');
             }
             
+            // placeholder for initial selection
             var kind = null;
             
+            // contains HTML for main screen and the loaner icon wrapper
             var html_array = [
                 "<h1 id='whichloaner' class='label' id='macorpc'>Which type of loaner?</h1><div id='apple' value='Mac'></div>\
                 <div id='windows' value='PC'></div>",
                 "<div id='avail'><h1 class='label' id='available'>Available:</h1><div class='icon_wrapper'></div></div>\
                 <div id='checked'><h1 class='label' id='checkedout'>Checked Out:</h1><div class='icon_wrapper'></div></div>"]; // end html_array
             
+            // appends first set of HTML to document, hides second set, then fades the document in
             $('.wrapper').append(html_array[0]);
             $('#viewavail').hide();
             $('#viewchecked').hide();
@@ -85,11 +92,13 @@
                 window.open($(this).attr('href'), '_blank');
             }); // end admin button listener
 
+            // closes modal when clicking "OK" on success message
             $(document).on('click', '#statusconfirm', function() {
                 $('#statusupdate').fadeOut(200);        
                 $('#lean_overlay').click();
-            });
+            }); // end statusconfirm listener
 
+            // opens change password modal if user is logged in, else prompts for login
             $(document).on('click', '#userpwchange', function() {
                 if(!(sessionStorage.getItem('currentuser'))) {
                     $('#togglelogin').click();
@@ -97,8 +106,9 @@
                 } else {
                     $('#changepwtrigger').click();
                 };
-            });
+            }); // end change password menu item listener
 
+            // listens for submit click for password change
             $(document).on('click', '#changepwconfirm', function(event) {
                 event.preventDefault();
                 var oldpw = $('#oldpw').val();
@@ -155,7 +165,7 @@
                         }
                     });
                 }
-            });
+            }); // end changepwconfirm listener
             
             $(document).on('click', '#checkouttrigger', function() {
                 $('#checkouttech').chosen({width: '100%'});
@@ -550,7 +560,7 @@
                     </div>
                 </div>
                 <label for='extension'>Extension:</label>
-                <input name='extension' id='extension' class='inputnum' tabindex='5' required />
+                <input name='extension' id='extension' class='inputnum' tabindex='5' placeholder='Four digits only.' required />
                 <label for='checkouttech'>Tech:</label>
                 <select id='checkouttech'></select>
                 <input type='hidden' name='assettag' id='assettagout' value='' required />

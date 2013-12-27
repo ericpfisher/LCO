@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>I/O</title>
+	<link type="text/css" rel="stylesheet" href="css/reset.css"/>
+	<style>
+		body {
+			background: #2ecd7e;
+			font-family: 'Helvetica Neue', Helvetica, Verdana, sans-serif;
+			text-align: center;
+		}
+
+		div.iopost {
+			margin: 10px;
+			padding: 10px;
+			border: 2px solid #969696;
+		}
+
+		div.iopost:after {
+			content: " ";
+			display: block;
+			height: 0;
+			clear: both;
+		}
+
+		p.posttext {
+			float: left;
+			margin-left: 10px;
+		}
+
+		div.closepost {
+			float: right;
+			display: inline-block;
+			transition: color 0.5s;
+			-webkit-transition: color 0.5s;
+			cursor: pointer;
+			font-size: 1.1em;
+			font-weight: bold;
+		}
+
+		div.closepost:hover {
+			color: #3296ff;
+		}
+
+		.techname, .user, .inorouttext, .ticket {
+			font-weight: bold;
+		}
+
+		#mainwrap {
+			width: 800px;
+			height: 100%;
+			background: #fff;
+			position: absolute;
+			left: 50%;
+			margin-left: -400px;
+			z-index: 1;
+			box-shadow: 10px 0 100px #777, -10px 0 100px #777; 
+		}
+
+		#mainheader {
+			font-size: 3em;
+		}
+	</style>
+	<script src="js/jquery-1.10.2.min.js"></script>
+	<script>
+	$(document).ready(function() {
+
+		function postData(element, tech, user, ticket, inorout) {
+			var inorouttext = null;
+			if (inorout==1) {
+				inorouttext = "drop off";
+			} else if (inorout==0) {
+				inorouttext = "pick up";
+			} else {
+				inorouttext = "got NULL from the database!";
+			}
+			$(element).append("<div id='"+ticket+"' class='iopost'><p class='posttext'><span class='techname'>"+tech+"</span> is expecting <span class='user'>"+user+"</span> to <span class='inorouttext'>"+inorouttext+"</span> their computer for <span class='ticket'>"+ticket+"</span>.<div class='closepost'>OK</div></p></div>");
+		}; // end postData declaration
+
+		var tech_names = null;
+
+		$.ajax({
+			type: "POST",
+			url: "./internal/getnames.php",
+			async: false,
+			dataType: "json",
+			success: function(data) {
+				tech_names = data;
+			}
+		});
+
+		$.ajax({
+			type: "POST",
+			url: "./internal/showio.php",
+			dataType: "json",
+			success: function(data) {
+				if (data.length > 0) {
+					$.each(data, function(index, post_data) {
+						var username = post_data.tech;
+						for (var i = 0, length = tech_names.length; i < length; i++) {
+							if (username == tech_names[i]["username"]) {
+								username = tech_names[i]["first"];
+								break;
+							}
+						}
+						postData("#mainwrap", username, post_data.user, post_data.inc, post_data.inorout);
+					});
+				} else {
+					$("#mainwrap").append("<p>No Posts</p>");
+				}
+			}
+		});
+
+		$(document).on("click", ".closepost", function() {
+			$(this).parent().fadeOut(200);
+		});
+	}); // end ready
+</script>
+</head>
+<body>
+<div id="mainwrap">
+	<h1 id="mainheader">I/O</h1>
+</div>
+</body>
+</html>

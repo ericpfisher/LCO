@@ -1,8 +1,8 @@
 <?php
 
 function loanerCount($db, $kind) {
-	$avail_sql = "SELECT asset_tag, serial_num, os_version, issues FROM Loaners WHERE kind='$kind' AND checked_in=1";
-	$checked_sql = "SELECT asset_tag, serial_num, os_version, issues FROM Loaners WHERE kind='$kind' AND checked_in=0";
+	$avail_sql = "SELECT asset_tag, serial_num, os_version, issues FROM Loaners WHERE kind='$kind' AND checked_in=1 ORDER BY asset_tag ASC";
+	$checked_sql = "SELECT asset_tag, serial_num, os_version, issues FROM Loaners WHERE kind='$kind' AND checked_in=0 ORDER BY asset_tag ASC";
 
 	$avail_obj = $db->query($avail_sql);
 	$avail_count = array();

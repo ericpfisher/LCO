@@ -156,7 +156,7 @@ body {
 }
 
 #mainwrap {
-	height: 600px;
+	height: 900px;
 /*	border: 2px dashed #0f0f0f; */
 	margin: auto;
 	text-align: center;
@@ -197,7 +197,7 @@ body {
 }
 
 .icon_wrapper {
-	height: 600px;
+	height: 900px;
 	width: 800px;
 /*	border: 1px dashed #0f0f0f; */
 	margin-top: 50px;
@@ -211,7 +211,6 @@ body {
     display: inline-block;
 	margin: 20px 40px;
 	background-image: url(../images/laptopoff.png);
-/*    background-color: #1C82CE; */
 	background-repeat: no-repeat;
 	background-position: center center;
 	background-size: 95%;

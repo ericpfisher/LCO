@@ -1,7 +1,7 @@
 <?php
 include_once 'functions.php';
 
-function checkin($db, $asset_tag) {
+function checkin($db, $asset_tag, $tech_in) {
 	$sql = "UPDATE Loaners SET checked_in=1 WHERE asset_tag='$asset_tag'";
 
 	$stmt = $db->prepare($sql);
