@@ -11,9 +11,10 @@
 		}
 
 		div.iopost {
-			margin: 10px;
-			padding: 10px;
+			margin: 15px;
+			padding: 20px;
 			border: 2px solid #969696;
+			border-radius: 3px
 		}
 
 		div.iopost:after {
@@ -26,47 +27,77 @@
 		p.posttext {
 			float: left;
 			margin-left: 10px;
+			cursor: pointer;
+			font-size: 1em;
 		}
 
-		div.closepost {
+		div.rightside {
 			float: right;
 			display: inline-block;
+		}
+
+		p.closepost{
 			transition: color 0.5s;
 			-webkit-transition: color 0.5s;
 			cursor: pointer;
-			font-size: 1.1em;
+			font-size: 1em;
 			font-weight: bold;
 		}
 
-		div.closepost:hover {
+		p.closepost:hover {
 			color: #3296ff;
 		}
 
-		.techname, .user, .inorouttext, .ticket {
+		.postnotes {
+			border: none;
+			overflow: auto;
+			outline: none;
+			resize: none;
+
+			box-shadow: none;
+			-webkit-box-shadow: none;
+			-moz-box-shadow: none;
+
+			border-top: 2px solid #3296ff;
+			margin-top: 15px;
+			padding-top: 10px;
+			width: 100%;
+			height: 50px;
+
+			font-size: 0.8em;
+		}
+
+		.techname, .user, .inorouttext, .needpwtext, .ticket {
 			font-weight: bold;
 		}
 
 		#mainwrap {
-			width: 800px;
+			width: 1000px;
 			height: 100%;
 			background: #fff;
 			position: absolute;
 			left: 50%;
-			margin-left: -400px;
+			margin-left: -500px;
 			z-index: 1;
 			box-shadow: 10px 0 100px #777, -10px 0 100px #777; 
 		}
 
 		#mainheader {
 			font-size: 3em;
+			margin-bottom: 30px;
+		}
+
+		#filterposts {
+			width: 30%;
 		}
 	</style>
 	<script src="js/jquery-1.10.2.min.js"></script>
 	<script>
 	$(document).ready(function() {
 
-		function postData(element, tech, user, ticket, inorout) {
+		function postData(element, tech, user, ticket, inorout, notes, needpws) {
 			var inorouttext = null;
+			var needpwtext = null;
 			if (inorout==1) {
 				inorouttext = "drop off";
 			} else if (inorout==0) {
@@ -74,14 +105,20 @@
 			} else {
 				inorouttext = "got NULL from the database!";
 			}
-			$(element).append("<div id='"+ticket+"' class='iopost'><p class='posttext'><span class='techname'>"+tech+"</span> is expecting <span class='user'>"+user+"</span> to <span class='inorouttext'>"+inorouttext+"</span> their computer for <span class='ticket'>"+ticket+"</span>.<div class='closepost'>OK</div></p></div>");
+
+			if (needpws==1) {
+				needpwtext = "and password(s)";
+			} else {
+				needpwtext = "";
+			}
+			$(element).append("<div id='"+ticket+"' class='iopost'><div class='picwrapper'></div><div class='summarywrap'><p class='posttext'><span class='techname'>"+tech+"</span> is expecting <span class='user'>"+user+"</span> to <span class='inorouttext'>"+inorouttext+"</span> their computer <span class='needpwtext'>"+needpwtext+"</span> for <span class='ticket'>"+ticket+"</span>.<div class='rightside'><p class='closepost' id="+ticket+">DONE</p></div></p></div><div class='noteswrap'><textarea class='postnotes' style='display:none'>"+notes+"</textarea></div></div>");
 		}; // end postData declaration
 
 		var tech_names = null;
 
 		$.ajax({
 			type: "POST",
-			url: "./internal/getnames.php",
+			url: "./internal/io/getnames.php",
 			async: false,
 			dataType: "json",
 			success: function(data) {
@@ -91,7 +128,7 @@
 
 		$.ajax({
 			type: "POST",
-			url: "./internal/showio.php",
+			url: "./internal/io/showio.php",
 			dataType: "json",
 			success: function(data) {
 				if (data.length > 0) {
@@ -103,7 +140,7 @@
 								break;
 							}
 						}
-						postData("#mainwrap", username, post_data.user, post_data.inc, post_data.inorout);
+						postData("#mainwrap", username, post_data.user, post_data.inc, post_data.inorout, post_data.notes, post_data.needpws);
 					});
 				} else {
 					$("#mainwrap").append("<p>No Posts</p>");
@@ -112,14 +149,54 @@
 		});
 
 		$(document).on("click", ".closepost", function() {
-			$(this).parent().fadeOut(200);
+			var thispost = $(this).attr("id");
+			$.ajax({
+				type: "POST",
+				data: {inc: thispost},
+				url: "./internal/io/deactivate.php",
+				success: function(data) {
+					if(data=="success") {
+						$("#"+thispost).fadeOut(400);
+					}
+				}
+			});
 		});
+
+		$(document).on("click", ".posttext", function() {
+			if ($(this).parent().siblings(".noteswrap").children(".postnotes").css("display") != "none") {
+				$(this).parent().siblings(".noteswrap").children(".postnotes").hide();
+				return false;
+			} else {
+				$(".postnotes").hide();
+			}
+			$(this).parent().siblings(".noteswrap").children(".postnotes").fadeIn(400);
+		});
+
+		$(document).on("keyup", "#filterposts", function() {
+			var parameters = $(this).val().toLowerCase();
+			if (parameters.length < 2) {
+				$(".iopost").each(function() {
+					if ($(this).css("display")=="none") $(this).fadeIn(400);
+				});
+			} else {
+				$(".iopost").each(function() {
+					var innertext = $(this).text().toLowerCase();
+			
+					if (innertext.indexOf(parameters) < 0) {
+						$(this).fadeOut(400);
+					} else if ((innertext.indexOf(parameters) > -1) && ($(this).css("display")=="none")) {
+						$(this).fadeIn(400);
+					}
+				});
+			}
+		}); // end keyup listener
 	}); // end ready
 </script>
 </head>
 <body>
 <div id="mainwrap">
 	<h1 id="mainheader">I/O</h1>
+	<input type="text" name="filterposts" id="filterposts" placeholder="Filter posts by INC, user, technician, etc." />
 </div>
 </body>
 </html>
