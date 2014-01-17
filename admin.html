@@ -12,11 +12,18 @@
         <script src="js/chosen.jquery.js"></script>
     <script>
     $(document).ready(function() {
+
+        /* custom function to hack the leanModal plugin and show/hide my own modals at will.
+        Most values taken from the plugin code to keep styles the same. */
         function manualModal(hideModal, showModal){
+            // fade out the first modal
             $(hideModal).css({ 'display': 'none' }).fadeOut(200);
+
             setTimeout(function() {
+                // get the dimensions of the modal about to be shown
                 var modal_height=$(showModal).outerHeight();
                 var modal_width=$(showModal).outerWidth();
+                // update the CSS of the showModal
                 $(showModal).css({
                     "display":"block",
                     "position":"fixed",
@@ -25,29 +32,50 @@
                     "left":50+"%",
                     "margin-left":-(modal_width/2)+"px",
                     "top":"100px"}).addClass('modal');
+                // then fade it in
                 $(showModal).fadeIn(200,1);
             }, 300);
-        };
+        }; // end manualModal
         
+        // links leanModal to certain button elements
         $('button[rel*=leanModal]').leanModal({top: 100, overlay: 0.45, closeButton: '.hideModal'});
+
+        // same for certain div elements
         $('div[rel*=leanModal]').leanModal({top: 100, overlay: 0.45, closeButton: '.hideModal'});
+
+        // "click" the trigger to show the login modal
         $('#logintrigger').click();
+
+        // hide the native leanModal overlay (since it won't let me unbind its click event to prevent people from accessing the page without logging in)
         $('#lean_overlay').hide();
+
+        // show my own custom overlay
         $('#login_overlay').css({ 'display' : 'block', opacity : 0 }).fadeTo(200, 0.5);
+
+        // listener for the log in button
         $('#loginbutton').click(function() {
+            // get the values entered into the username and password fields
             user = $('#loginusername').val();
             pass = $('#loginpassword').val();
+
+            // placeholder for the data returned from ajax
             var result = null;
+
+            // if the username field is empty upon submission...
             if(user==''){
+                // shake the login modal and do nothing
                 $('#loginform').submit(function() {
                     $('#login').effect('shake');
                     return false;
                 });
+            // if the password field is empty upon submission...
             } else if(pass==''){
+                // shake the login modal and do nothing
                 $('#loginform').submit(function() {
                     $('#login').effect('shake');
                     return false;
                 });
+            // if both the username and password fields are filled, submit them via ajax
             } else {
                 $.ajax({
                     type: 'POST',
@@ -60,29 +88,41 @@
                     }
                 });
             };
+            // if something was returned from the PHP script (which means success for that particular script)
             if(result != null){
+                // fade out the custom overlay
                 $('#login_overlay').fadeOut(200);
+                // and "click" the original leanModal overlay to hide the login modal
                 $('#lean_overlay').trigger('click');
                 return false;
+            // if nothing was returned from the PHP script (which means authentication failed)
             } else {
+                // shake the login div and do nothing (too lazy to add a status message, haha)
                 $('#login').effect('shake');
                 return false;
             };
-        });
+        }); // end log in button listener
         
+        // Status update confirmation listener (when the user clicks "okay" at the success message)
         $(document).on('click', '#statusconfirm', function() {
-			$('#statusupdate').fadeOut(200);        
+            // fade out the modal
+			$('#statusupdate').fadeOut(200);
+            // "click" the leanModal overlay
             $('#lean_overlay').click();
-        });
+        }); // end status update confirmation listener
         
-        // universal modal close listener
+        // universal modal close listener 
+        /* made this since I'm sometimes forcing certain modals to stay on the page regardless */
         $(document).on('click', '#lean_overlay', function() {
+            // iterate over all the modals and find the one that has the display style of "block" (meaning it's visible)
             var active_modal = $('.modal').filter(function() {
                 return this.style.display==='block';
             });
+            // add the "hidden" class and change the display property of that modal
             $(active_modal).addClass('hidden').css({ 'display': 'none' });
+            // then fade it out
             $(active_modal).fadeOut(200);
-        });
+        }); // end universal modal close listener
 
         // this gets the list of techs from the DB
         function userList() {
@@ -91,14 +131,16 @@
                 url: './internal/userlist.php',
                 dataType: 'json',
                 success: function(data) {
+                    // empty the list so it doesn't append recursively
                     $('#listofusers').empty();
+                    // for each tech found in the returned JSON object, append a line item to the #listofusers element (see below for properties)
                     $.each(data, function(index, techdata){
                         $('#listofusers').append("<li><div class='userwrap'>\
                             <div class='usernamewrap'><p class='usersummary' value='"+techdata.username+"'>"+techdata.first+" "+techdata.last+" ("+techdata.username+") </p></div>\
                             <div class='linkwrap'><p id='resetpw' class='link resetpw' value='"+techdata.username+"'>Reset Password&nbsp;</p><p id='edituser' class='link edit' value='"+techdata.username+"'>&nbsp;Edit&nbsp;</p><p id='deleteuser' class='link delete' value='"+techdata.username+"'>&nbsp;Delete&nbsp;</p></div></div></li>");
-                    });
-                }
-            });
+                    }); // end each
+                } // end success
+            }); // end ajax
         }; // end userList()
         
         // this gets the list of loaners from the DB
@@ -109,35 +151,44 @@
                 url: './internal/loanerlist.php',
                 dataType: 'json',
                 success: function(data){
+                    // empty the loaner list so it doesn't append recursively
                     $('#listofloaners').empty();
+                    // for each loaner found in the returned JSON, append a line item to the #listofloaners element
                     $.each(data, function(index, loanerdata){
                         $('#listofloaners').append("<li><div class='loanerwrap'>\
                             <div class='loanersummarywrap'><p class='loanersummary' value='"+loanerdata.asset_tag+"'>"+loanerdata.asset_tag+" ("+loanerdata.kind+") </p></div>\
                             <div class='linkwrap'><p id='editloaner' class='link edit' value='"+loanerdata.asset_tag+"'>Edit&nbsp;</p><p id='deleteloaner' class='link delete' value='"+loanerdata.asset_tag+"'>&nbsp;Delete</p></div></div></li>");
-                    });
-                }
-            });
+                    }); // end each
+                } // end success
+            }); // end ajax
         }; // end loanerList()
         
         // takes kind and populates OS select element
         function getOSes(kind) {
+            // if the selected kind is Mac
             if(kind=='Mac') {
+                // empty the OS version "chosen" select and append the options below, then update the "chosen"
                 $('#os_version').empty().append("<option id='lion' value='OS X 10.7.x'>OS X 10.7.x</option><option id='mountainlion' value='OS X 10.8.x'>OS X 10.8.x</option>");
                 $('#os_version').chosen({width: '100%'});
                 $('#os_version').trigger('chosen:updated');
+            // if the selected kind is PC
             } else if(kind=='PC') {
+                // empty the OS version "chosen" select and append the option below
                 $('#os_version').empty().append("<option id='win7' value='Windows 7'>Windows 7</option>");
                 $('#os_version').chosen({width: '100%'});
                 $('#os_version').trigger('chosen:updated');
+            // otherwise, keep the OS version select empty
             } else {
                 $('#os_version').empty();
             };
         }; // end getOSes()
         
+        // listener to fill the #listofusers element when the leanModal #toggleusers trigger is "clicked"
         $(document).on('click', '#toggleusers', function() {
             userList();
-        });
+        }); // end toggleusers listener
 
+        // listener to fill the #listofloaners element when the leanModal #togglemacs or #togglepcs is "clicked"
         $(document).on('click', '#togglemacs, #togglepcs', function() {
             var kind = $(this).attr('id');
             if(kind=='togglemacs') {
@@ -145,7 +196,7 @@
             } else if(kind=='togglepcs') {
                 loanerList('PC');
             }
-        });
+        }); // end toggle mac/pc listener
 
         // listens for pcradio click
         $(document).on('click', 'label[for="pcradio"]', function() {
@@ -159,10 +210,16 @@
         
         // reset password status alert listener
         $(document).on('click', '#resetpw', function() {
+            /* #resetpasswordbutton, #deleteuserbutton, and #deleteloanerbutton all share the same modal.
+            first, need to hide the buttons we're not using depending on what we're doing,
+            e.g. hide the deleteuser and deleteloaner buttons if we're resetting someone's password. */
             $('#deleteuserbutton').hide();
             $('#deleteloanerbutton').hide();
+            // get the value of the user we're resetting
             var target_user = $(this).attr('value');
+            // assign that value to the button and show the button
             $('#resetpasswordbutton').attr('value', target_user).show();
+            // hide the adminusers modal and show the statusalert modal (confirmation modal)
             manualModal('#adminusers', '#statusalert');
         }); // end reset password status alert listener
             
