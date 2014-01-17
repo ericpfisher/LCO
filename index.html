@@ -12,7 +12,7 @@
         <script src="js/chosen.jquery.js"></script>
 		<script>
 		$(document).ready(function() {
-            // gets a count of available/checkout out loaners from the DB, then appends to the document
+            // gets a count of available/checkout out loaners from the DB, then appends each to the document
             function get_count(category) {
                 var lastcheckout = '';
                 $.ajax({
@@ -39,6 +39,7 @@
             }; // end get_count
             
             // take string and parse as JSON
+            /* Each icon has a JSON string as its value.  get_detail parses the JSON string and returns a JSON object. */
             function get_detail(element) {
                 var x = $(element).attr('value');
                 var json = $.parseJSON(x);
@@ -68,7 +69,7 @@
                 $('#logoutshow').text('Log out, '+sessionStorage.getItem('currentuser')).removeClass('hidden');
             }
             
-            // placeholder for initial selection
+            // placeholder for initial selection of PC or Mac
             var kind = null;
             
             // contains HTML for main screen and the loaner icon wrapper
@@ -86,6 +87,7 @@
             
             
             /* Listeners */
+            /* --------- */
             // opens admin page in new tab/window
             $(document).on('click', '#adminlink', function(event) {
                 event.preventDefault();
@@ -110,12 +112,13 @@
 
             // listens for submit click for password change
             $(document).on('click', '#changepwconfirm', function(event) {
+                // get the values of the fields
                 event.preventDefault();
                 var oldpw = $('#oldpw').val();
                 var newpw = $('#newpw').val();
                 var confirmnewpw = $('#confirmnewpw').val();
                 var username = sessionStorage.getItem('currentuser');
-
+                // if any of the fields are empty, or if the new password fields don't match, reset the form and shake the div
                 if((!oldpw) || (!newpw) || (!confirmnewpw)){
                   $('#changepw').effect('shake');
                     $('#pwchgstatus').text('Fields cannot be blank.').css('visibility', 'visible').fadeTo(400,1).delay(2000).fadeTo(400,0);
@@ -127,7 +130,7 @@
                     $('#changepwform').trigger('reset');
                     $('#oldpw').focus();
                 } else {
-
+                    // if the fields weren't empty and the new passwords match, send the values to changepassword.php
                     $.ajax({
                         type: 'POST',
                         data: {username: username,
@@ -137,6 +140,7 @@
                         url: './internal/changepassword.php',
                         success: function(data){
                             if(data=='success'){
+                                // if change was successful, fade out the password change div and show the status update div with success msg (and reset the password form)
                                 $('#changepw').css({ 'display': 'none' }).fadeOut(200);
                                 setTimeout(function() {
                                     var modal_height=$('#statusupdate').outerHeight();
@@ -153,10 +157,12 @@
                                 }, 300);
                                 $('#changepwform').trigger('reset');
                             } else if(data=='wrongold'){
+                                // if the old password was wrong, shake the password change div and show the status message
                                 $('#changepw').effect('shake');
                                 $('#pwchgstatus').text('Old password was incorrect.').css('visibility', 'visible').fadeTo(400,1).delay(2000).fadeTo(400,0);
                                 $('#oldpw').focus();
                             } else {
+                                // unexpected error handling
                                 $('#changepw').effect('shake');
                                 $('#pwchgstatus').text('Unexpected error occured.').css('visibility', 'visible').fadeTo(400,1).delay(2000).fadeTo(400,0);
                                 $('#oldpw').focus();
@@ -167,34 +173,44 @@
                 }
             }); // end changepwconfirm listener
             
+            /* listener to show list of technicians when a tech is about to check out a loaner.
+            Non-admin users may only check out loaners for themselves. */
             $(document).on('click', '#checkouttrigger', function() {
                 $('#checkouttech').chosen({width: '100%'});
+                // if the currently logged in user is an admin...
                 if(sessionStorage.getItem('isadmin')=='yes'){
                     $('#checkouttech').removeProp('disabled').empty();
+                    // use ajax to get the list of techs from the DB
                     $.ajax({
                         type: 'POST',
                         url: './internal/userlist.php',
                         dataType: 'json',
                         async: false,
                         success: function(data){
+                            // iterate over the returned list
                             $.each(data, function(index, techdata){
+                                // skip over the generic admin user in the DB
                                 if(techdata.username=='admin'){
                                     return true;
                                 }
+                                // append each tech to the "chosen" select element
                                 $('#checkouttech').append("<option value='"+techdata.username+"'>"+techdata.first+" "+techdata.last+"</option");
                             });
                         }
                     });
-                } else {
+                } else { // if currently logged in user is NOT an admin
+                    // get their username from localstorage, append that to the "chosen" select, and disable the select element
                     $('#checkouttech').empty().append("<option value='"+sessionStorage.getItem('currentuser')+"'>"+sessionStorage.getItem('currentuser')+"</option>");
                     $('#checkouttech').prop('disabled', 'disabled');
                 }
+                // update the "chosen" element to reflect any changes
                 $('#checkouttech').trigger('chosen:updated');
             });
 
             // Screen listener for loaner icons
             $(document).on({
-                mouseenter: function() { // DELAY THIS WITH HOVERINTENT?!
+                // animate to the orange BG and fade in the asset tag number when the mouse hovers
+                mouseenter: function() {
                     $(this).children('.iconscreen').animate({
                         backgroundColor: '#FA9B53'
                     }, {
@@ -204,6 +220,7 @@
                     $(this).find('.screentag').clearQueue().fadeTo(500,1);
                 },                                                   
                 mouseleave: function() {
+                    // animate to a dark blue BG and hide the asset tag number when mouse leaves
                     $(this).children('.iconscreen').animate({
                         backgroundColor: '#004'
                     }, {
@@ -213,12 +230,16 @@
                     $(this).find('.screentag').hide().clearQueue();
                 }
             }, '.icon');
-            
+            // end loaner icon listener
+
             // Log In button listener
-          $('#loginbutton').click(function() {
+            $('#loginbutton').click(function() {
+            // get the values of the fields
                 user = $('#username').val();
                 pass = $('#password').val();
-                var result = null;
+                var result = null; // place holder variable for data returned from ajax
+
+                // if either the username or password fields are blank, return false 
                 if($('#username').val()==''){
                     $('#loginform').submit(function() {
                         return false;
@@ -227,6 +248,7 @@
                     $('#loginform').submit(function() {
                         return false;
                     });
+                    // otherwise, submit the values of the fields to login.php
                 } else {
                     $.ajax({
                         type: 'POST',
@@ -239,26 +261,34 @@
                         }
                     });
                 };
+                // if a result is returned
                 if(result != null){
+                    // if the returned result is "yes"
                     if(result=='yes'){
+                        // the user is an admin
                         sessionStorage.setItem('isadmin', 'yes');
                     } else {
+                        // otherwise the user is not an admin
                         sessionStorage.setItem('isadmin', 'no');
                     }
+                    // save the current user to sessionstorage, change the login button to a logout button
                     sessionStorage.setItem('currentuser', user);
                     $('#lean_overlay').trigger('click');
                     $('#togglelogin').attr('href', '#logout');
                     $('#loginshow').addClass('hidden');
                     $('#logoutshow').text('Log out, '+sessionStorage.getItem('currentuser')).removeClass('hidden');
                     return false;
+                // if no result returned, shake the login div and do nothing
                 } else {
                     $('#login').effect('shake');
                     return false;
                 };
-          });
+            });
+            // end Log In button listener
             
             // Log Out button listener
             $('#logoutbutton').click(function() {
+                // delete all session storage, hide the log out button, show the log in button, and reset the login modal form
                 sessionStorage.clear();
                 $('#lean_overlay').click();
                 $('#togglelogin').attr('href','#login');
@@ -270,15 +300,21 @@
             
             // Check Out listener
             $('#checkoutbutton').click(function() {
-                var tech = null;
+                var tech = null; // placeholder for tech value
+                // if the user is an admin
                 if(sessionStorage.getItem('isadmin')=='yes'){
+                    /* check the value of the "chosen" select for the tech checking out the loaner...
+                    ...because admins can check out loaners for other people. */
                     tech = $('#checkouttech').val();
                 } else {
+                    // if user is not an admin, get the value of the current user from session storage
                     tech = sessionStorage.getItem('currentuser');
                 }
-                var result = null;
+                var result = null; // place holder for data returned from ajax
+
                 $.ajax({
                     type: 'POST',
+                    // assigns and sends the values of the elements below, e.g. #firstname text field
                     data: {first_name: $('#firstname').val(),
                            last_name: $('#lastname').val(),
                            user_ext: $('#extension').val(),
@@ -293,12 +329,18 @@
                         result = data;
                     }
                 });
+                // if the checkout was successful
                 if(result=='success'){
+                    // hide the checkout modal by "clicking" the overlay
                     $('#lean_overlay').click();
+                    // reset the checkout form
                     $('#checkoutform').trigger('reset');
+                    // fade out the main wrapper for updating
                     $('.wrapper').fadeOut(200, function() {
                         $(this).html( html_array[1]).load().hide();
+                        // get the updated loaner count and append to the main wrapper
                         get_count(kind);
+                        // show the small PC or Mac icons in the main wrapper
                         if(kind=='Mac') {
                             $('#available, #checkedout').css({
                             backgroundImage: 'url(images/applewhitefill.png)'
@@ -310,28 +352,35 @@
                         } else {
                             alert("An unexpected error occurred.");
                         }
+                        // fade the main wrapper back in after updating the loaner count
                         $(this).fadeIn(200);
+                        // "click" the status update trigger to show success msg
                         $('#statustrigger').click();
+                        // hide the "checked out" section since you always check out from the available section
                         $(this).find('#checked').addClass('hidden');
                     });
+                    // alternative to event.preventDefault
                     return false;
                 } else {
                     alert('An unexpected error occurred: checkout.');
                 }
-            });
+            }); // end Check Out listener
             
             // Check In listener
             $('#checkinconfirm').click(function() {
-                var tech = null;
+                var tech = null; // place holder for tech value
+                // if there's no one logged in (no "currentuser" in session storage)
                 if(!(sessionStorage.getItem('currentuser'))) {
+                    // "click" the login modal trigger to show the login modal
                     $('#togglelogin').click();
                 } else {
+                    // otherwise, assign the currently logged in user to tech
                     tech = sessionStorage.getItem('currentuser');
                 }
-                var result = null;
+                var result = null; // place holder for data returned from ajax
                 $.ajax({
                     type: 'POST',
-                    data: {asset_tag: $('#assettagin').val(),
+                    data: {asset_tag: $('#assettagin').val(), // get the value of the #assettagin element
                            tech_in: tech
                           },
                     url: './internal/checkin.php',
@@ -340,24 +389,35 @@
                         result = data;
                     }
                 });
+                // if the check in was successful
                 if(result=='success'){
+                    // hide the check in modal by "clicking" the overlay
                     $('#lean_overlay').click();
+                    // fade oout the main wrapper for updating
                     $('.wrapper').fadeOut(200, function() {
                         $(this).html( html_array[1]).load().hide();
+                        // get the updated loaner count from the DB and append
                         get_count(kind);
+                        // fade the main wrapper back in
                         $(this).fadeIn(200);
+                        // show the status alert modal to display success message
                         $('#statustrigger').click();
+                        // hide the available section since you only check in loaners from the "currently checked out" screen
                         $(this).find('#avail').addClass('hidden');
                     });
+                    // alternative to event.preventDefault
                     return false;
                 } else {
                     alert('An unexpected error occurred: checkin.');
                 }
-            });
+            }); // end Check In listener
             
             // Reset button listener
             $('#reset').on('click', function () {
+                /* hide the button to switch between the available and checked out views...
+                ...because you're going back to the main page where you haven't selected the type of loaner you want (PC or Mac) */
                 $('#viewavail, #viewchecked').fadeOut(400);
+                // fade out the main wrapper, load the main screen HTML, make sure the BG is the main green color, and fade it back in.
                 $('.wrapper').fadeOut(400, function() {
                     $(this).html( html_array[0] ).fadeIn(400);
                     if($('body').css('backgroundColor')!='#2ecd7e') $('body').animate({ backgroundColor: '#2ecd7e' }, 400);
@@ -366,9 +426,13 @@
              
             // Home page large icon selector
             $('body').on('click', '#apple, #windows', function() {
+                // get the kind of loaner the user selected, store in the value attr of the main screen buttons
                 kind = $(this).attr('value');
+                // fade out the main wrapper
                 $(this).parent().fadeOut(400, function() {
+                    // load the icon wrapper HTML
                     $(this).html( html_array[1] ).load().hide();
+                    // add the small icon of Mac or PC depending on the selection
                     if(kind=='Mac') {
                         $('#available, #checkedout').css({
                             backgroundImage: 'url(images/applewhitefill.png)'
@@ -380,54 +444,84 @@
                     } else {
                         alert("An unexpected error occurred.");
                     }
+                    // get the count of available and checked out loaners from the DB and append to the icon wrapper
                     get_count(kind);
+                    // fade the main wrapper back in, starting off at the available view (default)
                     $(this).fadeIn(600);
+                    // fade in the button to switch the view to checked out loaners
                     $('#viewchecked').fadeIn(600);
+                    // hide the checked out loaners
                     $(this).find('#checked').addClass('hidden');
                 });
             }); // end large icon selector
             
             // Available/Checked switch button listener
             $(document).on('click', '#viewchecked, #viewavail', function() {
+                /* get the assign the available and checked out views to variables depending on whether their visible or hidden.
+                this code is really just a show/hide because the available and checkout views have already been filled with their respective values when they load.
+                (see the get_count function for more detail) */
                 var active = $('#mainwrap').find('#avail:not(".hidden"), #checked:not(".hidden")');
                 var inactive = $('#mainwrap').find('#avail.hidden, #checked.hidden');
-                
+                // fade out the visible view
                 active.fadeOut(400, function() {
                     $(this).addClass('hidden');
+                    // if the hidden view is "checked out" (or said differently, if the currently visible view is "available")
                     if(inactive.attr('id')=='checked'){
+                        // hide the button to show the checked out
                         $('#viewchecked').hide();
+                        // show the button to show the available (because we're in the middle of switching to checked out view)
                         $('#viewavail').fadeIn(400);
+                        // change the background to red to represent the checked out screen
                         $('body').animate({ backgroundColor: '#DE6C6C' }, 400);
+                    // if the hidden view is "available" (or, if the currently visible view is "checked out")
                     } else {
+                        // hide the button to show the available
                         $('#viewavail').hide();
+                        // show the button to show the checked out (because we're in the middle of switching to the available view)
                         $('#viewchecked').fadeIn(400);
+                        // change the background back to main green to represent the available screen
                         $('body').animate({ backgroundColor: '#2ecd7e' }, 400);
                     }
+                    // fade in the originally hidden view
                     inactive.removeClass('hidden').hide().fadeIn(400);
                 }); // end fadeOut
             }); // end switch_button listener
             
-            // Loaner count icon click event
+            // listener for click event on loaner computer icon
             $(document).on('click', '.icon', function() {
+                // get the loaner's detail
                 var detail = get_detail($(this));
+                // status of the loaner (available or checked out)
                 var status = $(this).parent().parent().attr('id');
+                // asset tag value found in the JSON object returned earlier
                 var tag = detail.asset_tag;
+                // if no user is logged in
                 if(!(sessionStorage.getItem('currentuser'))) {
+                    // show the login modal
                     $('#togglelogin').click();
                     return false;
                 }
+                // if the loaner was clicked on the available screen
                 if(status=='avail') {
+                    // show the checkout modal
                     $('#checkouttrigger').click();
+                    // assign the value of #asset tag
                     $('#assettagout').attr('value', tag);
+                // if the loaner was clicked on the checked out screen
                 } else if(status=='checked') {
+                    // array to hold string values of months
                     var months = new Array("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
+                    // get the details of the checkout
                     var checkout_detail = get_detail($(this).find('.iconscreen'));
+                    // checks to make sure the loaner was "checked out" according to its own detail
                     if(checkout_detail.checked_out){
+                        // get the individual values for the date, and replace -'s with /'s
                         var checkout_date = new Date(checkout_detail.checked_out.replace(/-/g,'/'));
                         var checkout_day = checkout_date.getDate();
                         var checkout_month = checkout_date.getMonth();
                         var checkout_year = checkout_date.getFullYear();
                     };
+                    // show the values of the loaner detail JSON object in the relevant fields on the #checkin modal
                     $('#lastcheckoutdate').text("Checked Out: " + months[checkout_month] + " " + checkout_day + ", " + checkout_year);
                     $('#lastcheckoutuser').text("For: " + checkout_detail.first_name + " " + checkout_detail.last_name);
                     $('#lastcheckoutext').text("Extension: " + checkout_detail.user_ext);
@@ -435,6 +529,7 @@
                     $('#lastcheckouttech').text("Technician: " + checkout_detail.tech_out);
                     $('#checkintrigger').click();
                     $('#assettagin').attr('value', tag);
+                // unexpected error handler
                 } else {
                     alert("An unexpected error occurred.");
                 }
