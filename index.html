@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
+        <title>LCO</title>
         <link type="text/css" rel="stylesheet" href="css/reset.css" />
         <link type="text/css" rel="stylesheet" href="jquery-ui/css/no-theme/jquery-ui-1.10.3.custom.min.css" />
         <link type="text/css" rel="stylesheet" href="css/chosen.css" />
@@ -393,7 +394,7 @@
                 if(result=='success'){
                     // hide the check in modal by "clicking" the overlay
                     $('#lean_overlay').click();
-                    // fade oout the main wrapper for updating
+                    // fade out the main wrapper for updating
                     $('.wrapper').fadeOut(200, function() {
                         $(this).html( html_array[1]).load().hide();
                         // get the updated loaner count from the DB and append
@@ -522,6 +523,7 @@
                         var checkout_year = checkout_date.getFullYear();
                     };
                     // show the values of the loaner detail JSON object in the relevant fields on the #checkin modal
+                    $('#lastcheckouttag').text("Asset: " + tag);
                     $('#lastcheckoutdate').text("Checked Out: " + months[checkout_month] + " " + checkout_day + ", " + checkout_year);
                     $('#lastcheckoutuser').text("For: " + checkout_detail.first_name + " " + checkout_detail.last_name);
                     $('#lastcheckoutext').text("Extension: " + checkout_detail.user_ext);
@@ -664,6 +666,7 @@
         </div>
         <div id='checkin' class='hidden'>
             <h2>Check In Loaner?</h2>
+            <p id='lastcheckouttag' class='infocheckin'></p>
             <p id='lastcheckoutdate' class='infocheckin'></p>
             <p id='lastcheckoutuser' class='infocheckin'></p>
             <p id='lastcheckoutext' class='infocheckin'></p>

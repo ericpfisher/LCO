@@ -14,7 +14,7 @@ function getTech($db, $fullname) {
 }
 
 function ioPost($db, $user, $inc, $inorout, $techid, $needpws, $notes) {
-	$sql = "INSERT INTO IO (user, inc, inorout, tech, needpws, notes) VALUES ('$user','$inc', '$inorout', '$techid', '$needpws', '$notes')";
+	$sql = "INSERT INTO IO (user, inc, inorout, tech, needpws, notes) VALUES ('$user','$inc', '$inorout', '$techid', '$needpws', '$notes') ON DUPLICATE KEY UPDATE inorout='$inorout', needpws='$needpws', notes='$notes', active=1";
 
 	$io_stmt = $db->prepare($sql);
 	$result = $io_stmt->execute();

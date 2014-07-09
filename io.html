@@ -2,7 +2,7 @@
 <html>
 <head>
 	<title>I/O</title>
-	<link type="text/css" rel="stylesheet" href="css/reset.css"/>
+	<link type="text/css" rel="stylesheet" href="css/reset.css" />
 	<style>
 		body {
 			background: #2ecd7e;
@@ -14,7 +14,7 @@
 			margin: 15px;
 			padding: 20px;
 			border: 2px solid #969696;
-			border-radius: 3px
+			border-radius: 2px
 		}
 
 		div.iopost:after {
@@ -71,15 +71,52 @@
 			font-weight: bold;
 		}
 
+		.techlistname {
+			padding: 4px;
+		}
+
+		.techlistname:first-child {
+			padding-top: 6px;
+		}
+		.techlistname:first-child:hover {
+			border-radius: 2px 2px 0 0;
+		}
+
+		.techlistname:last-child:hover {
+			border-radius: 0 0 2px 2px;
+		}
+
+		.techlistname:last-child {
+			padding-bottom: 6px;
+		} 
+
+		.techlistname:hover {
+			background: #3296ff;
+			color: #fff;
+		}
+
+		.hasnotes:before {
+			content: "";
+			background: url(images/ionotes.png) no-repeat;
+			background-size: 16px 22px;
+			width: 16px;
+			height: 22px;
+			display: block;
+			position: absolute;
+			margin-left: -13px;
+			margin-top: -4px;
+		}
+
 		#mainwrap {
 			width: 1000px;
-			height: 100%;
-			background: #fff;
+			min-height: 137px;
+			background: #fffdfd;
+			border-radius: 0 0 3px 3px;
 			position: absolute;
 			left: 50%;
 			margin-left: -500px;
 			z-index: 1;
-			box-shadow: 10px 0 100px #777, -10px 0 100px #777; 
+			box-shadow: 10px 0 50px #777, -10px 0 50px #777; 
 		}
 
 		#mainheader {
@@ -90,8 +127,57 @@
 		#filterposts {
 			width: 30%;
 		}
+
+		#techlistdiv {
+			background-color: #fff;
+			position: absolute;
+			width: 150px;
+			height: auto;
+			z-index: 101;
+			margin-top: 20px;
+
+			border-radius: 3px;
+
+			box-shadow: -4px 4px 10px #777;
+			text-align: center;
+		}
+
+		#techlistdiv:before {
+			position: absolute;
+			display: inline-block;
+			border-left: 15px solid transparent;
+			border-right: 15px solid transparent;
+			border-bottom: 15px solid #eee;
+
+			top: -15px;
+			left: 150px;
+			margin-left: -90px;
+
+			content: "";
+		}
+
+		#techlistdiv:after {
+			position: absolute;
+			display: inline-block;
+			border-left: 14px solid transparent;
+			border-right: 14px solid transparent;
+			border-bottom: 14px solid #fff;
+
+			top: -14px;
+			left: 150px;
+			margin-left: -89px;
+
+			content: "";
+		}
+
+		#noposts {
+			margin: 24px 0px;
+			font-size: 1.5em;
+		}
+
 	</style>
 	<script src="js/jquery-1.10.2.min.js"></script>
+	<script src="js/chosen.jquery.js"></script>
 	<script>
 	$(document).ready(function() {
 
@@ -114,6 +200,37 @@
 			$(element).append("<div id='"+ticket+"' class='iopost'><div class='picwrapper'></div><div class='summarywrap'><p class='posttext'><span class='techname'>"+tech+"</span> is expecting <span class='user'>"+user+"</span> to <span class='inorouttext'>"+inorouttext+"</span> their computer <span class='needpwtext'>"+needpwtext+"</span> for <span class='ticket'>"+ticket+"</span>.<div class='rightside'><p class='closepost' id="+ticket+">DONE</p></div></p></div><div class='noteswrap'><textarea class='postnotes' style='display:none'>"+notes+"</textarea></div></div>");
 		}; // end postData declaration
 
+		function loadPosts() {
+			$.ajax({
+				type: "POST",
+				url: "./internal/io/showio.php",
+				dataType: "json",
+				async: false,
+				success: function(data) {
+					if (data.length > 0) {
+						$.each(data, function(index, post_data) {
+							var username = post_data.tech;
+							for (var i = 0, length = tech_names.length; i < length; i++) {
+								if (username == tech_names[i]["username"]) {
+									username = tech_names[i]["first"];
+									break;
+								}
+							}
+							postData("#postwrap", username, post_data.user, post_data.inc, post_data.inorout, post_data.notes, post_data.needpws);
+						});
+					} else {
+						$("#postwrap").hide().append("<p id='noposts'>Not Expecting Any Users!</p>").fadeIn(400);
+					}
+				}
+			});
+			$(".iopost").each(function() {
+				var hasnotes = $(this).find(".postnotes").is(":empty");
+				if (hasnotes==false) {
+					$(this).addClass("hasnotes");
+				}
+			});
+		}
+
 		var tech_names = null;
 
 		$.ajax({
@@ -126,29 +243,7 @@
 			}
 		});
 
-		$.ajax({
-			type: "POST",
-			url: "./internal/io/showio.php",
-			dataType: "json",
-			success: function(data) {
-				if (data.length > 0) {
-					$.each(data, function(index, post_data) {
-						var username = post_data.tech;
-						for (var i = 0, length = tech_names.length; i < length; i++) {
-							if (username == tech_names[i]["username"]) {
-								username = tech_names[i]["first"];
-								break;
-							}
-						}
-						postData("#mainwrap", username, post_data.user, post_data.inc, post_data.inorout, post_data.notes, post_data.needpws);
-					});
-				} else {
-					$("#mainwrap").append("<p>No Posts</p>");
-				}
-			}
-		});
-
-		$(document).on("click", ".closepost", function() {
+		/*$(document).on("click", ".closepost", function() {
 			var thispost = $(this).attr("id");
 			$.ajax({
 				type: "POST",
@@ -160,7 +255,7 @@
 					}
 				}
 			});
-		});
+		});*/
 
 		$(document).on("click", ".posttext", function() {
 			if ($(this).parent().siblings(".noteswrap").children(".postnotes").css("display") != "none") {
@@ -190,6 +285,61 @@
 				});
 			}
 		}); // end keyup listener
+		// "DONE" click listener
+		$(document).on('click', '.closepost', function() {
+			var inc = $(this).attr("id");
+			var done_position = $(this).offset();
+			$("#techlistdiv").empty();
+            $.ajax({
+                type: 'POST',
+                url: './internal/userlist.php',
+                dataType: 'json',
+                async: false,
+                success: function(data){
+                    $.each(data, function(index, techdata){
+                        if(techdata.username=='admin'){
+                            return true;
+                        }
+                        $('#techlistdiv').append("<p class='techlistname' value='"+techdata.username+"'>"+techdata.first+" "+techdata.last+"</p>");
+                    });
+                }
+            });
+            $("#techlistdiv").attr("value", inc).css({
+            	"top": done_position.top+20,
+               	"left": done_position.left,
+               	"margin-left": "-52px"
+            }).fadeIn(200);
+        }); // end "DONE" click listener
+
+		$(window).resize(function() {
+			var new_position = $(".rightside:last").offset(); // set to "last" in case "first" is closed.
+			$("#techlistdiv").css("left", new_position.left);
+		}); // window resize listener for select modal to follow x-axis placement of "DONE" button
+
+		$(document).on("mouseup", ":not(#techlistdiv), :not(.closepost)", function() {
+			$("#techlistdiv").fadeOut(200);
+		}); // end listener to close tech list when clicking the document body
+
+		$(document).on("click", ".techlistname", function() {
+			var donetech = $(this).attr("value");
+			var inc = $(this).parent().attr("value");
+			$.ajax({
+				type: "POST",
+				data: {inc: inc, donetech: donetech},
+				url: "./internal/io/donetech.php",
+				async: false,
+				success: function(data){
+					if (data=="success"){
+						$("#"+inc).fadeOut(400, function() {
+							$(this).remove();
+						});
+					}
+				}
+			}); // end ajax
+			if ($(".iopost").length==1) setTimeout(function(){loadPosts()}, 400); // reloads posts after clicking "DONE"
+		}); // end listener to append donetech to post in DB
+
+		loadPosts(); // shows posts on page load
 	}); // end ready
 </script>
 </head>
@@ -197,6 +347,9 @@
 <div id="mainwrap">
 	<h1 id="mainheader">I/O</h1>
 	<input type="text" name="filterposts" id="filterposts" placeholder="Filter posts by INC, user, technician, etc." />
+	<div id='postwrap'></div>
+</div>
+<div id="techlistdiv" style="display: none">
 </div>
 </body>
 </html>
