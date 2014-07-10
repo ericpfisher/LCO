@@ -174,7 +174,7 @@
             // if the selected kind is PC
             } else if(kind=='PC') {
                 // empty the OS version "chosen" select and append the option below
-                $('#os_version').empty().append("<option id='win7' value='Windows 7'>Windows 7</option>");
+                $('#os_version').empty().append("<option id='win7' value='Windows 7'>Windows 7</option><option id='win8dot1' value='Windows 8.1'>Windows 8.1</option>");
                 $('#os_version').chosen({width: '100%'});
                 $('#os_version').trigger('chosen:updated');
             // otherwise, keep the OS version select empty
